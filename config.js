@@ -6,10 +6,10 @@ const config = {
         frontendUrl: 'http://127.0.0.1:8000'
     },
     
-    // Production environment (Render)
+    // Production environment (Netlify frontend + Render backend)
     production: {
         apiUrl: 'https://portfolio-backend.onrender.com/api',
-        frontendUrl: 'https://portfolio-frontend.onrender.com'
+        frontendUrl: 'https://your-netlify-site.netlify.app' // Will update after Netlify deployment
     }
 };
 

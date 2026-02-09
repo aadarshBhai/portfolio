@@ -1,16 +1,5 @@
 services:
-  # Static Site Service
-  - type: web
-    name: portfolio-frontend
-    env: static
-    buildCommand: "echo 'No build needed for static site'"
-    staticPublishPath: .
-    routes:
-      - type: rewrite
-        source: /api/*
-        destination: https://portfolio-backend.onrender.com/api/*
-    
-  # Backend API Service  
+  # Backend API Service only (Frontend on Netlify)
   - type: web
     name: portfolio-backend
     env: node
