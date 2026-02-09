@@ -9,7 +9,7 @@ const config = {
     // Production environment (Netlify frontend + Render backend)
     production: {
         apiUrl: 'https://portfolio-backend.onrender.com/api',
-        frontendUrl: 'https://your-netlify-site.netlify.app' // Will update after Netlify deployment
+        frontendUrl: 'https://aadarshgolucky.netlify.app'
     }
 };
 
