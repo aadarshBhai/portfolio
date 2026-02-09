@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Admin - Aadarsh Kumar</title>
+    <link rel="stylesheet" href="../style.css?v=2">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <header id="header" class="scrolled">
+        <div class="container nav">
+            <a href="../index.html" class="logo">AK. Admin</a>
+            <ul class="nav-links">
+                <li><a href="../blog.html">View Blog</a></li>
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="#" id="logoutBtn" style="color: #c33;">Logout</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main style="padding-top: 100px;">
+        <section class="admin-section">
+            <div class="container">
+                <div class="admin-header">
+                    <h1>Blog Admin Panel</h1>
+                    <p>Create and manage your blog posts</p>
+                </div>
+
+                <div class="admin-layout">
+                    <!-- Sidebar -->
+                    <aside class="admin-sidebar">
+                        <div class="sidebar-section">
+                            <h3>Quick Actions</h3>
+                            <button class="admin-btn primary" id="newPostBtn">
+                                <i data-lucide="plus"></i> New Post
+                            </button>
+                            <button class="admin-btn secondary" id="viewPostsBtn">
+                                <i data-lucide="list"></i> View All Posts
+                            </button>
+                        </div>
+
+                        <div class="sidebar-section">
+                            <h3>Recent Posts</h3>
+                            <ul id="recentPostsList" class="recent-posts-list">
+                                <li><a href="#" data-id="1">Welcome to My Blog</a></li>
+                                <li><a href="#" data-id="2">Leadership Lessons</a></li>
+                                <li><a href="#" data-id="3">Creating Sustainable Change</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="sidebar-section">
+                            <h3>Statistics</h3>
+                            <div class="stat-item">
+                                <span class="stat-label">Total Posts:</span>
+                                <span class="stat-value" id="totalPosts">3</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Categories:</span>
+                                <span class="stat-value" id="totalCategories">4</span>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- Main Editor -->
+                    <div class="admin-main">
+                        <div class="editor-container">
+                            <div class="editor-header">
+                                <h2 id="editorTitle">Create New Post</h2>
+                                <div class="editor-actions">
+                                    <button class="admin-btn secondary" id="saveDraftBtn">
+                                        <i data-lucide="save"></i> Save Draft
+                                    </button>
+                                    <button class="admin-btn primary" id="publishBtn">
+                                        <i data-lucide="send"></i> Publish
+                                    </button>
+                                </div>
+                            </div>
+
+                            <form id="blogPostForm" class="blog-form">
+                                <input type="hidden" id="postId" value="">
+
+                                <div class="form-group">
+                                    <label for="postTitleInput">Post Title *</label>
+                                    <input type="text" id="postTitleInput" class="form-control"
+                                        placeholder="Enter an engaging title..." required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="postExcerptInput">Excerpt *</label>
+                                    <textarea id="postExcerptInput" class="form-control" rows="2"
+                                        placeholder="Brief summary of your post..." required></textarea>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="postCategoryInput">Category *</label>
+                                        <select id="postCategoryInput" class="form-control" required>
+                                            <option value="">Select Category</option>
+                                            <option value="news-politics">News and Politics</option>
+                                            <option value="passive-earning">Passive Earning</option>
+                                            <option value="business-startup">Business and Startup</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="postDateInput">Publish Date *</label>
+                                        <input type="date" id="postDateInput" class="form-control" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="postImageInput">Featured Image URL</label>
+                                    <input type="url" id="postImageInput" class="form-control"
+                                        placeholder="https://example.com/image.jpg">
+                                    <small>Or leave empty to use a placeholder</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="postContentInput">Post Content *</label>
+                                    <div class="editor-toolbar">
+                                        <button type="button" class="toolbar-btn" data-action="bold" title="Bold">
+                                            <i data-lucide="bold"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" data-action="italic" title="Italic">
+                                            <i data-lucide="italic"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" data-action="heading" title="Heading">
+                                            <i data-lucide="heading"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" data-action="quote" title="Quote">
+                                            <i data-lucide="quote"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" data-action="list" title="List">
+                                            <i data-lucide="list"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" data-action="link" title="Link">
+                                            <i data-lucide="link"></i>
+                                        </button>
+                                    </div>
+                                    <textarea id="postContentInput" class="form-control editor-textarea" rows="15"
+                                        placeholder="Write your blog post content here...
+
+Formatting Tips:
+- Use ## for headings (##  Main Heading, ### Subheading)
+- Use **text** for bold
+- Use *text* for italic
+- Use > for quotes
+- Use - or * for bullet lists
+- Use [text](url) for links" required></textarea>
+                                    <small>Use Markdown formatting for rich text</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="postPublishedInput" checked>
+                                        Publish immediately
+                                    </label>
+                                </div>
+                            </form>
+
+                            <!-- Preview Section -->
+                            <div class="preview-section">
+                                <h3>Preview</h3>
+                                <div class="blog-card" id="previewCard">
+                                    <div class="blog-image">
+                                        <img id="previewImage"
+                                            src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/%3E%3Ctext fill=%22%23999%22 font-family=%22sans-serif%22 font-size=%2224%22 dy=%2210.5%22 font-weight=%22bold%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22%3EBlog Image%3C/text%3E%3C/svg%3E"
+                                            alt="Preview">
+                                    </div>
+                                    <div class="blog-content">
+                                        <div class="blog-meta">
+                                            <span class="blog-category" id="previewCategory">Category</span>
+                                            <span class="blog-date" id="previewDate">Date</span>
+                                        </div>
+                                        <h3 id="previewTitle">Your Title Here</h3>
+                                        <p id="previewExcerpt">Your excerpt will appear here...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Posts List Modal -->
+                <div id="postsModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>All Blog Posts</h2>
+                            <button class="modal-close" id="closeModalBtn">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="posts-table" id="postsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Category</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="postsTableBody">
+                                    <!-- Posts will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="margin-top: 4rem;">
+        <div class="container footer-content">
+            <p>&copy; 2026 Aadarsh Kumar. Blog Admin Panel.</p>
+        </div>
+    </footer>
+
+    <script src="../main.js?v=5"></script>
+    <script src="blog-admin.js?v=3"></script>
+    <script>
+        // Authentication check - redirect to login if not authenticated
+        if (sessionStorage.getItem('blogAdminAuth') !== 'authenticated') {
+            window.location.href = 'index.html';
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function (e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to logout?')) {
+                sessionStorage.removeItem('blogAdminAuth');
+                sessionStorage.removeItem('blogAdminEmail');
+                window.location.href = 'index.html';
+            }
+        });
+
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Aadarsh Kumar's Blog - Thoughts on community development, social impact, and leadership.">
+    <title>Blog | Aadarsh Kumar</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="blog-styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="loader-text">Blog</div>
+    </div>
+
+    <header id="header">
+        <div class="container nav">
+            <a href="index.html" class="logo">AK.</a>
+            <ul class="nav-links">
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#work">Experience</a></li>
+                <li><a href="index.html#education">Education</a></li>
+                <li><a href="blog.html" class="active">Blog</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+            <div class="menu-btn" id="menuToggle">
+                <i data-lucide="menu"></i>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Blog Hero -->
+        <section id="blog-hero">
+            <div class="container">
+                <h1 class="reveal">Essays & Thoughts</h1>
+                <p class="reveal">Insights on current affairs, wealth creation strategies, and entrepreneurial journeys
+                    in the modern economy.</p>
+            </div>
+        </section>
+
+        <!-- Blog Filter -->
+        <section id="blog-filter">
+            <div class="container">
+                <div class="filter-buttons reveal">
+                    <button class="filter-btn active" data-category="all">All Posts</button>
+                    <button class="filter-btn" data-category="news-politics">News and Politics</button>
+                    <button class="filter-btn" data-category="passive-earning">Passive Earning</button>
+                    <button class="filter-btn" data-category="business-startup">Business and Startup</button>
+                    <button class="filter-btn refresh-btn" id="refreshBtn" title="Refresh posts">
+                        <i data-lucide="refresh-cw"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Blog Posts Grid -->
+        <section id="blog-posts">
+            <div class="container">
+                <div class="blog-grid" id="blogGrid">
+                    <!-- No demo posts - only your actual published blogs will appear -->
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <i data-lucide="file-text"
+                        style="width: 48px; height: 48px; stroke-width: 1px; margin-bottom: 1rem;"></i>
+                    <h3>No posts found</h3>
+                    <p>There are no blog posts in this category yet.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section id="blog-cta" style="background-color: var(--text-primary); color: var(--bg-primary);">
+            <div class="container">
+                <div class="cta-content reveal" style="text-align: center; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: var(--bg-primary); font-size: 2.5rem; margin-bottom: 1.5rem;">Want to collaborate?
+                    </h2>
+                    <p style="color: #ccc; margin-bottom: 2rem;">I'm always open to discussions about business ideas,
+                        investment opportunities, or collaborations.</p>
+                    <a href="index.html#contact" class="cta-btn">Get in Touch</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <p>&copy; 2026 Aadarsh Kumar. Ashoka University Alumnus.</p>
+            <div class="footer-socials">
+                <a href="mailto:aadarshgolucky@gmail.com">Email</a>
+                <a href="https://www.instagram.com/aathersh.kumar/" target="_blank">Instagram</a>
+                <a href="https://www.linkedin.com/in/aadarsh-kumar-b804b7210/" target="_blank">LinkedIn</a>
+                <a href="https://github.com/aadarshBhai" target="_blank">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js?v=5"></script>
+    <script src="blog.js?v=3"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

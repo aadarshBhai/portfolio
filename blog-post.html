@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Blog Post - Aadarsh Kumar">
+    <title>Blog Post | Aadarsh Kumar</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="blog-styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="loader-text">Loading...</div>
+    </div>
+
+    <header id="header">
+        <div class="container nav">
+            <a href="index.html" class="logo">AK.</a>
+            <ul class="nav-links">
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#work">Experience</a></li>
+                <li><a href="index.html#education">Education</a></li>
+                <li><a href="blog.html">Blog</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+            <div class="menu-btn" id="menuToggle">
+                <i data-lucide="menu"></i>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Breadcrumb -->
+        <section id="breadcrumb">
+            <div class="container">
+                <div class="breadcrumb-links reveal">
+                    <a href="index.html">Home</a> <span>/</span>
+                    <a href="blog.html">Blog</a> <span>/</span>
+                    <span id="currentPost">Current Post</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Blog Post Content -->
+        <article id="blog-post">
+            <div class="container post-container">
+                <!-- Post Header -->
+                <header class="post-header reveal">
+                    <div class="post-meta">
+                        <span class="post-category" id="postCategory">Category</span>
+                        <span class="post-date" id="postDate">Date</span>
+                    </div>
+                    <h1 id="postTitle">Blog Post Title</h1>
+                    <p class="post-excerpt" id="postExcerpt">Blog post excerpt will appear here.</p>
+                </header>
+
+                <!-- Featured Image -->
+                <div class="post-featured-image reveal">
+                    <img id="postImage" src="" alt="Featured image"
+                        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22400%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22800%22 height=%22400%22/%3E%3Ctext fill=%22%23999%22 font-family=%22sans-serif%22 font-size=%2232%22 dy=%2210.5%22 font-weight=%22bold%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22%3EBlog Featured Image%3C/text%3E%3C/svg%3E'">
+                </div>
+
+                <!-- Post Content -->
+                <div class="post-content reveal" id="postContent">
+                    <p>This is a sample blog post. You can write your content using the blog admin panel.</p>
+
+                    <h2>Getting Started</h2>
+                    <p>Use the admin panel to create and edit your blog posts. You can add headings, paragraphs, lists,
+                        and more.</p>
+
+                    <h3>Key Features</h3>
+                    <ul>
+                        <li>Easy-to-use admin interface</li>
+                        <li>Rich text formatting</li>
+                        <li>Category management</li>
+                        <li>Responsive design</li>
+                    </ul>
+
+                    <blockquote>
+                        "The best way to predict the future is to create it." - Peter Drucker
+                    </blockquote>
+
+                    <h2>Conclusion</h2>
+                    <p>Start sharing your insights and experiences with your audience through your blog.</p>
+                </div>
+
+                <!-- Author Section -->
+                <div class="post-author reveal">
+                    <div class="author-info">
+                        <img src="assets/profile.jpg" alt="Aadarsh Kumar" class="author-avatar">
+                        <div>
+                            <h4>Aadarsh Kumar</h4>
+                            <p>Ashoka University Alumnus specializing in community mobilization and social impact.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="post-navigation reveal">
+                    <a href="blog.html" class="btn-secondary">← Back to Blog</a>
+                    <div class="share-buttons">
+                        <span>Share:</span>
+                        <a href="#" class="share-btn" id="shareTwitter" title="Share on Twitter">
+                            <i data-lucide="twitter"></i>
+                        </a>
+                        <a href="#" class="share-btn" id="shareLinkedIn" title="Share on LinkedIn">
+                            <i data-lucide="linkedin"></i>
+                        </a>
+                        <a href="#" class="share-btn" id="shareFacebook" title="Share on Facebook">
+                            <i data-lucide="facebook"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Related Posts -->
+        <section id="related-posts" style="background-color: var(--bg-secondary);">
+            <div class="container">
+                <h2 class="reveal" style="font-size: 2rem; margin-bottom: 3rem;">Related Posts</h2>
+                <div class="blog-grid" id="relatedPosts">
+                    <!-- Related posts will be dynamically loaded -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <p>&copy; 2026 Aadarsh Kumar. Ashoka University Alumnus.</p>
+            <div class="footer-socials">
+                <a href="mailto:aadarshgolucky@gmail.com">Email</a>
+                <a href="https://www.instagram.com/aathersh.kumar/" target="_blank">Instagram</a>
+                <a href="https://www.linkedin.com/in/aadarsh-kumar-b804b7210/" target="_blank">LinkedIn</a>
+                <a href="https://github.com/aadarshBhai" target="_blank">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js?v=5"></script>
+    <script src="blog-post.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

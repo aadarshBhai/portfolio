@@ -1,0 +1,27 @@
+{
+  "name": "aadarsh-portfolio",
+  "version": "1.0.0",
+  "description": "Aadarsh Kumar's Portfolio Website",
+  "main": "index.html",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "echo 'No build step needed for static site'",
+    "full": "concurrently \"node server.js\" \"npx http-server -p 8000 -o\"",
+    "run": "concurrently \"node server.js\" \"npx http-server -p 8000 -o\""
+  },
+  "keywords": [
+    "portfolio",
+    "blog",
+    "website"
+  ],
+  "author": "Aadarsh Kumar",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.6.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "concurrently": "^8.2.2"
+  }
+}

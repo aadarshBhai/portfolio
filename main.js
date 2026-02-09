@@ -1,16 +1,24 @@
 // Header Scroll Effect
 const header = document.getElementById('header');
 window.addEventListener('scroll', () => {
-    if (window.scrollY > 50) {
+    if (header && window.scrollY > 50) {
         header.classList.add('scrolled');
-    } else {
+    } else if (header) {
         header.classList.remove('scrolled');
     }
 });
 
 // Reveal Animations on Scroll
-const revealElements = document.querySelectorAll('.reveal');
+let revealElements = document.querySelectorAll('.reveal');
+
+window.refreshReveal = () => {
+    revealElements = document.querySelectorAll('.reveal');
+    revealOnScroll();
+};
+
 const revealOnScroll = () => {
+    if (revealElements.length === 0) return;
+
     const triggerBottom = window.innerHeight * 0.9;
 
     revealElements.forEach(el => {
@@ -27,9 +35,9 @@ window.addEventListener('load', revealOnScroll); // Trigger on load
 // Mobile Menu Toggle
 const menuToggle = document.getElementById('menuToggle');
 const navLinks = document.querySelector('.nav-links');
-const menuIcon = menuToggle.querySelector('i');
+const menuIcon = menuToggle ? menuToggle.querySelector('i') : null;
 
-if (menuToggle) {
+if (menuToggle && navLinks && menuIcon) {
     menuToggle.addEventListener('click', () => {
         navLinks.classList.toggle('active');
         const isActive = navLinks.classList.contains('active');
@@ -56,11 +64,16 @@ if (menuToggle) {
 // Loader
 window.addEventListener('load', () => {
     const loader = document.getElementById('loader');
-    setTimeout(() => {
-        loader.classList.add('fade-out');
-        // Trigger initial scroll reveal
+    if (loader) {
+        setTimeout(() => {
+            loader.classList.add('fade-out');
+            // Trigger initial scroll reveal
+            revealOnScroll();
+        }, 1500);
+    } else {
+        // Trigger initial scroll reveal if no loader
         revealOnScroll();
-    }, 1500);
+    }
 });
 
 // Form Submission Simulation
@@ -112,6 +125,8 @@ if (contactForm) {
 // Parallax Effect for Images
 window.addEventListener('mousemove', (e) => {
     const parallaxImages = document.querySelectorAll('.hero-image img, .work-item img');
+    if (parallaxImages.length === 0) return;
+
     const { clientX, clientY } = e;
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
