@@ -1,0 +1,23 @@
+services:
+  # Static Site Service
+  - type: web
+    name: portfolio-frontend
+    env: static
+    buildCommand: "echo 'No build needed for static site'"
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://portfolio-backend.onrender.com/api/*
+    
+  # Backend API Service  
+  - type: web
+    name: portfolio-backend
+    env: node
+    buildCommand: "npm install"
+    startCommand: "node simple-blog-server.js"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000

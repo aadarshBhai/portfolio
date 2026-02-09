@@ -1,7 +1,7 @@
 // Blog Admin JavaScript
 
-// API base URL for MongoDB-backed blog
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
+// API Configuration - will be set by config.js
+const API_BASE_URL = window.API_BASE_URL || 'http://127.0.0.1:5000/api';
 
 // Generic helper for JSON API requests
 async function apiRequest(path, options = {}) {
