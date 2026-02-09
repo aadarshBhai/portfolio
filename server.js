@@ -30,8 +30,8 @@ const Post = mongoose.model('Post', postSchema);
 let useMongoDB = false;
 
 // Connect to MongoDB if URI is present
-if (process.env.MONGODB_URI) {
-    mongoose.connect(process.env.MONGODB_URI)
+if (process.env.MONGO_URI) {
+    mongoose.connect(process.env.MONGO_URI)
         .then(() => {
             console.log('Connected to MongoDB');
             useMongoDB = true;
@@ -41,7 +41,7 @@ if (process.env.MONGODB_URI) {
             console.log('Falling back to file system storage');
         });
 } else {
-    console.log('No MONGODB_URI found. Using file system storage.');
+    console.log('No MONGO_URI found. Using file system storage.');
 }
 
 // Helper to load posts
@@ -200,7 +200,7 @@ app.get('/api/debug', async (req, res) => {
         totalPosts: posts.length,
         persistence: useMongoDB ? 'MongoDB' : 'File System',
         envPort: process.env.PORT,
-        mongoUriPresent: !!process.env.MONGODB_URI
+        mongoUriPresent: !!process.env.MONGO_URI
     });
 });
 
