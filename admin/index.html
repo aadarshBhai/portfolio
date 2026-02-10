@@ -160,9 +160,9 @@
 
             // Validate credentials
             if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-                // Set authentication token in sessionStorage
-                sessionStorage.setItem('blogAdminAuth', 'authenticated');
-                sessionStorage.setItem('blogAdminEmail', email);
+                // Set authentication token in localStorage (persistent across restarts)
+                localStorage.setItem('blogAdminAuth', 'authenticated');
+                localStorage.setItem('blogAdminEmail', email);
 
                 // Redirect to admin panel
                 window.location.href = 'blog-admin.html';
@@ -181,7 +181,7 @@
         });
 
         // Check if already logged in
-        if (sessionStorage.getItem('blogAdminAuth') === 'authenticated') {
+        if (localStorage.getItem('blogAdminAuth') === 'authenticated') {
             window.location.href = 'blog-admin.html';
         }
 

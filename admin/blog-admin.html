@@ -216,7 +216,7 @@ Formatting Tips:
     <script src="blog-admin.js?v=3"></script>
     <script>
         // Authentication check - redirect to login if not authenticated
-        if (sessionStorage.getItem('blogAdminAuth') !== 'authenticated') {
+        if (localStorage.getItem('blogAdminAuth') !== 'authenticated') {
             window.location.href = 'index.html';
         }
 
@@ -224,8 +224,8 @@ Formatting Tips:
         document.getElementById('logoutBtn').addEventListener('click', function (e) {
             e.preventDefault();
             if (confirm('Are you sure you want to logout?')) {
-                sessionStorage.removeItem('blogAdminAuth');
-                sessionStorage.removeItem('blogAdminEmail');
+                localStorage.removeItem('blogAdminAuth');
+                localStorage.removeItem('blogAdminEmail');
                 window.location.href = 'index.html';
             }
         });
