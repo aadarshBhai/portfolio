@@ -1,12 +1,44 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// In-memory storage (fallback)
+// File-based persistent storage
+const POSTS_FILE = path.join(__dirname, 'posts.json');
+
+// Load posts from file
 let blogPosts = [];
+function loadPostsFromFile() {
+    try {
+        if (fs.existsSync(POSTS_FILE)) {
+            const data = fs.readFileSync(POSTS_FILE, 'utf8');
+            blogPosts = JSON.parse(data);
+            console.log('Loaded posts from file:', blogPosts.length);
+        } else {
+            blogPosts = [];
+            console.log('No posts file found, starting empty');
+        }
+    } catch (error) {
+        console.error('Error loading posts:', error);
+        blogPosts = [];
+    }
+}
+
+// Save posts to file
+function savePostsToFile() {
+    try {
+        fs.writeFileSync(POSTS_FILE, JSON.stringify(blogPosts, null, 2));
+        console.log('Saved posts to file:', blogPosts.length);
+    } catch (error) {
+        console.error('Error saving posts:', error);
+    }
+}
+
+// Load posts on startup
+loadPostsFromFile();
 
 // Middleware
 app.use(cors({
@@ -36,6 +68,7 @@ app.post('/api/posts', (req, res) => {
         createdAt: new Date()
     };
     blogPosts.unshift(post);
+    savePostsToFile(); // Save to persistent storage
     console.log('Created post:', post.title);
     console.log('Post published status:', post.published);
     console.log('Total posts:', blogPosts.length);
@@ -48,6 +81,7 @@ app.put('/api/posts/:id', (req, res) => {
     const index = blogPosts.findIndex(p => p.id === req.params.id);
     if (index !== -1) {
         blogPosts[index] = { ...blogPosts[index], ...req.body };
+        savePostsToFile(); // Save to persistent storage
         console.log('Updated post:', blogPosts[index].title);
         res.json(blogPosts[index]);
     } else {
@@ -57,6 +91,7 @@ app.put('/api/posts/:id', (req, res) => {
 
 app.delete('/api/posts/:id', (req, res) => {
     blogPosts = blogPosts.filter(p => p.id !== req.params.id);
+    savePostsToFile(); // Save to persistent storage
     console.log('Deleted post:', req.params.id);
     res.json({ message: 'Post deleted' });
 });
