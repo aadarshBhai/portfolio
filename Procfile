@@ -1,1 +1,1 @@
-web: node server-mongo.js
+web: node server.js

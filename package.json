@@ -4,15 +4,15 @@
   "description": "Aadarsh Kumar's Portfolio Website",
   "main": "index.html",
   "scripts": {
-    "start": "node server-mongo.js",
-    "start:mongo": "node server-mongo.js",
-    "dev": "node server-mongo.js",
-    "dev:mongo": "node server-mongo.js",
+    "start": "node server.js",
+    "start:mongo": "node server.js",
+    "dev": "node server.js",
+    "dev:mongo": "node server.js",
     "build": "echo 'No build step needed for static site'",
-    "full": "concurrently \"node server-mongo.js\" \"npx http-server -p 8000 -o\"",
-    "full:mongo": "concurrently \"node server-mongo.js\" \"npx http-server -p 8000 -o\"",
-    "run": "concurrently \"node server-mongo.js\" \"npx http-server -p 8000 -o\"",
-    "run:mongo": "concurrently \"node server-mongo.js\" \"npx http-server -p 8000 -o\""
+    "full": "concurrently \"node server.js\" \"npx http-server -p 8000 -o\"",
+    "full:mongo": "concurrently \"node server.js\" \"npx http-server -p 8000 -o\"",
+    "run": "concurrently \"node server.js\" \"npx http-server -p 8000 -o\"",
+    "run:mongo": "concurrently \"node server.js\" \"npx http-server -p 8000 -o\""
   },
   "keywords": [
     "portfolio",

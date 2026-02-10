@@ -2,295 +2,270 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const { MongoClient, ObjectId } = require('mongodb');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enhanced persistent storage with fallback
-// Use /tmp directory on Render for persistent storage
-const isRender = process.env.RENDER === 'true';
-const storageDir = isRender ? '/tmp' : __dirname;
-const POSTS_FILE = path.join(storageDir, 'posts.json');
-const BACKUP_FILE = path.join(storageDir, 'posts-backup.json');
+// MongoDB Configuration
+const MONGODB_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb+srv://aadarshgolucky:A%40Wrpcp3.%40737xx@cluster0.oss7hwd.mongodb.net/blog?retryWrites=true&w=majority&appName=Cluster0';
+const DB_NAME = 'blog';
+const COLLECTION_NAME = 'posts';
 
-console.log('Storage directory:', storageDir);
-console.log('Is Render environment:', isRender);
+let db = null;
+let postsCollection = null;
 
-// Load posts from file with multiple fallbacks
-let blogPosts = [];
-let inMemoryPosts = []; // In-memory backup
-
-function loadPostsFromFile() {
-    console.log('=== LOADING POSTS FROM STORAGE ===');
+// Connect to MongoDB with migration logic
+async function connectAndMigrate() {
     try {
-        if (fs.existsSync(POSTS_FILE)) {
-            const data = fs.readFileSync(POSTS_FILE, 'utf8');
-            blogPosts = JSON.parse(data);
-            console.log(`✅ Loaded posts from main file: ${blogPosts.length}`);
-        } else if (fs.existsSync(BACKUP_FILE)) {
-            const data = fs.readFileSync(BACKUP_FILE, 'utf8');
-            blogPosts = JSON.parse(data);
-            console.log(`✅ Loaded posts from backup file: ${blogPosts.length}`);
-        } else {
-            // If no files exist, use in-memory backup if available
-            if (inMemoryPosts.length > 0) {
-                blogPosts = [...inMemoryPosts];
-                console.log(`✅ Restored from in-memory backup: ${blogPosts.length}`);
+        console.log('=== CONNECTING TO MONGODB ===');
+        const client = new MongoClient(MONGODB_URI);
+        await client.connect();
+        db = client.db(DB_NAME);
+        postsCollection = db.collection(COLLECTION_NAME);
+        console.log('✅ Connected to MongoDB Atlas');
+
+        // Migration Check: If DB is empty and posts.json exists, migrate data
+        const count = await postsCollection.countDocuments();
+        if (count === 0) {
+            console.log('📦 MongoDB collection is empty. Checking for local migration data...');
+            const storageDir = process.env.RENDER === 'true' ? '/tmp' : __dirname;
+            const POSTS_FILE = path.join(__dirname, 'posts.json'); // Always look in current dir first for initial migration
+
+            if (fs.existsSync(POSTS_FILE)) {
+                try {
+                    const data = fs.readFileSync(POSTS_FILE, 'utf8');
+                    const localPosts = JSON.parse(data);
+                    if (localPosts.length > 0) {
+                        console.log(`🚚 Migrating ${localPosts.length} posts from posts.json to MongoDB...`);
+                        await postsCollection.insertMany(localPosts);
+                        console.log('✅ Migration successful');
+                    }
+                } catch (err) {
+                    console.error('❌ Migration failed:', err);
+                }
             } else {
-                blogPosts = [];
-                console.log('⚠️ No existing posts file found, starting fresh');
+                console.log('ℹ️ No local posts.json found for migration.');
             }
-        }
-        
-        // Ensure all posts have the new fields
-        let updated = false;
-        blogPosts.forEach(post => {
-            if (post.views === undefined) {
-                post.views = 0;
-                updated = true;
-            }
-            if (post.shares === undefined) {
-                post.shares = 0;
-                updated = true;
-            }
-            if (post.comments === undefined) {
-                post.comments = [];
-                updated = true;
-            }
-        });
-        
-        if (updated) {
-            savePostsToFile();
-            console.log('✅ Updated existing posts with new fields');
-        }
-        
-        // Update in-memory backup
-        inMemoryPosts = [...blogPosts];
-        
-    } catch (error) {
-        console.error('❌ Error loading posts:', error);
-        // Use in-memory backup as last resort
-        if (inMemoryPosts.length > 0) {
-            blogPosts = [...inMemoryPosts];
-            console.log(`✅ Using in-memory backup due to error: ${blogPosts.length}`);
         } else {
-            blogPosts = [];
+            console.log(`✅ Loaded ${count} posts from MongoDB Atlas`);
         }
-    }
-}
-
-// Save posts to file with backup
-function savePostsToFile() {
-    console.log('=== SAVING POSTS TO STORAGE ===');
-    console.log('Posts to save:', blogPosts.length);
-    
-    try {
-        // Save to main file
-        fs.writeFileSync(POSTS_FILE, JSON.stringify(blogPosts, null, 2));
-        console.log('✅ Saved to main file');
-        
-        // Create backup
-        fs.writeFileSync(BACKUP_FILE, JSON.stringify(blogPosts, null, 2));
-        console.log('✅ Created backup file');
-        
-        // Update in-memory backup
-        inMemoryPosts = [...blogPosts];
-        console.log('✅ Updated in-memory backup');
-        
-        console.log('Current posts:', blogPosts.map(p => ({ id: p.id, title: p.title, published: p.published })));
+        return true;
     } catch (error) {
-        console.error('❌ Error saving posts:', error);
-        // Still update in-memory backup even if file save fails
-        inMemoryPosts = [...blogPosts];
+        console.error('❌ MongoDB connection error:', error);
+        return false;
     }
 }
-
-// Load posts on startup
-loadPostsFromFile();
-
-// Auto-save every 30 seconds as additional safety
-setInterval(() => {
-    if (blogPosts.length > 0) {
-        savePostsToFile();
-        console.log('🔄 Auto-saved posts');
-    }
-}, 30000);
 
 // Middleware
 app.use(cors({
-    origin: ['https://aadarshgolucky.netlify.app', 'http://localhost:8000', 'https://127.0.0.1:8000'],
+    origin: ['https://aadarshgolucky.netlify.app', 'http://localhost:8000', 'http://127.0.0.1:8000', 'http://localhost:5000', 'http://127.0.0.1:5000'],
     credentials: true
 }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
+// Helper to sanitize post for JSON response
+function postToJSON(post) {
+    if (!post) return null;
+    const json = { ...post };
+    if (!json.id && json._id) {
+        json.id = json._id.toString();
+    }
+    // Don't delete _id as it might be useful for some clients, 
+    // but ensure 'id' is present for frontend compatibility
+    return json;
+}
+
 // API Routes
-app.get('/api/posts', (req, res) => {
-    const publishedPosts = blogPosts.filter(post => post.published === true);
-    console.log('=== GET /api/posts ===');
-    console.log('Total posts in memory:', blogPosts.length);
-    console.log('Published posts:', publishedPosts.length);
-    console.log('Posts:', publishedPosts.map(p => ({ title: p.title, published: p.published })));
-    res.json(publishedPosts);
-});
 
-// Get single post by ID
-app.get('/api/posts/:id', (req, res) => {
-    const postId = req.params.id;
-    const post = blogPosts.find(p => p.id === postId);
-    console.log('=== GET /api/posts/:id ===');
-    console.log('Looking for post ID:', postId);
-    console.log('Found post:', post ? post.title : 'Not found');
-    
-    if (post) {
-        // Increment views
-        post.views = (post.views || 0) + 1;
-        savePostsToFile(); // Save updated view count
-        res.json(post);
-    } else {
-        res.status(404).json({ error: 'Post not found' });
+// Get all posts
+app.get('/api/posts', async (req, res) => {
+    try {
+        const showAll = req.query.all === 'true';
+        const query = showAll ? {} : { published: true };
+        const posts = await postsCollection.find(query).sort({ createdAt: -1 }).toArray();
+        res.json(posts.map(postToJSON));
+    } catch (error) {
+        console.error('Error fetching posts:', error);
+        res.status(500).json({ error: 'Failed to fetch posts' });
     }
 });
 
-// Increment share count
-app.post('/api/posts/:id/share', (req, res) => {
-    const postId = req.params.id;
-    const post = blogPosts.find(p => p.id === postId);
-    console.log('=== POST /api/posts/:id/share ===');
-    console.log('Sharing post ID:', postId);
-    
-    if (post) {
-        post.shares = (post.shares || 0) + 1;
-        savePostsToFile(); // Save updated share count
-        res.json({ shares: post.shares });
-    } else {
-        res.status(404).json({ error: 'Post not found' });
+// Get single post
+app.get('/api/posts/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        let post;
+
+        if (ObjectId.isValid(id)) {
+            post = await postsCollection.findOne({ _id: new ObjectId(id) });
+        } else {
+            post = await postsCollection.findOne({ id: id });
+        }
+
+        if (post) {
+            // Async view increment (don't wait for response)
+            postsCollection.updateOne({ _id: post._id }, { $inc: { views: 1 } }).catch(console.error);
+            post.views = (post.views || 0) + 1;
+            res.json(postToJSON(post));
+        } else {
+            res.status(404).json({ error: 'Post not found' });
+        }
+    } catch (error) {
+        console.error('Error fetching post:', error);
+        res.status(500).json({ error: 'Failed to fetch post' });
     }
 });
 
-// Add comment to post
-app.post('/api/posts/:id/comments', (req, res) => {
-    const postId = req.params.id;
-    const post = blogPosts.find(p => p.id === postId);
-    console.log('=== POST /api/posts/:id/comments ===');
-    console.log('Adding comment to post ID:', postId);
-    
-    if (post) {
-        const comment = {
-            id: Date.now().toString(),
+// Create post
+app.post('/api/posts', async (req, res) => {
+    try {
+        const post = {
             ...req.body,
             createdAt: new Date(),
-            approved: false // Comments need approval
+            views: 0,
+            shares: 0,
+            comments: [],
+            commentsCount: 0
         };
-        
-        if (!post.comments) {
-            post.comments = [];
+
+        const result = await postsCollection.insertOne(post);
+        const insertedPost = { ...post, _id: result.insertedId };
+        res.json(postToJSON(insertedPost));
+    } catch (error) {
+        console.error('Error creating post:', error);
+        res.status(500).json({ error: 'Failed to create post' });
+    }
+});
+
+// Update post
+app.put('/api/posts/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        let filter = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: id };
+
+        // Remove _id and id from body to avoid update errors
+        const updateData = { ...req.body };
+        delete updateData._id;
+        delete updateData.id;
+
+        const result = await postsCollection.findOneAndUpdate(
+            filter,
+            { $set: updateData },
+            { returnDocument: 'after' }
+        );
+
+        if (result) {
+            res.json(postToJSON(result));
+        } else {
+            res.status(404).json({ error: 'Post not found' });
         }
-        post.comments.push(comment);
-        savePostsToFile(); // Save updated comments
-        res.json(comment);
-    } else {
-        res.status(404).json({ error: 'Post not found' });
+    } catch (error) {
+        console.error('Error updating post:', error);
+        res.status(500).json({ error: 'Failed to update post' });
     }
 });
 
-// Get comments for post
-app.get('/api/posts/:id/comments', (req, res) => {
-    const postId = req.params.id;
-    const post = blogPosts.find(p => p.id === postId);
-    
-    if (post) {
-        const approvedComments = (post.comments || []).filter(c => c.approved);
-        res.json(approvedComments);
-    } else {
-        res.status(404).json({ error: 'Post not found' });
-    }
-});
+// Delete post
+app.delete('/api/posts/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        let filter = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: id };
 
-app.post('/api/posts', (req, res) => {
-    console.log('=== POST /api/posts RECEIVED ===');
-    console.log('Request body:', req.body);
-    
-    const post = {
-        id: Date.now().toString(),
-        ...req.body,
-        createdAt: new Date(),
-        views: 0,
-        shares: 0,
-        comments: []
-    };
-    blogPosts.unshift(post);
-    savePostsToFile(); // Save to persistent storage
-    console.log('Created post:', post.title);
-    console.log('Post published status:', post.published);
-    console.log('Total posts:', blogPosts.length);
-    console.log('Published posts:', blogPosts.filter(p => p.published === true).length);
-    console.log('Full post object:', post);
-    res.json(post);
-});
-
-app.put('/api/posts/:id', (req, res) => {
-    const index = blogPosts.findIndex(p => p.id === req.params.id);
-    if (index !== -1) {
-        blogPosts[index] = { ...blogPosts[index], ...req.body };
-        savePostsToFile(); // Save to persistent storage
-        console.log('Updated post:', blogPosts[index].title);
-        res.json(blogPosts[index]);
-    } else {
-        res.status(404).json({ error: 'Post not found' });
-    }
-});
-
-app.delete('/api/posts/:id', (req, res) => {
-    blogPosts = blogPosts.filter(p => p.id !== req.params.id);
-    savePostsToFile(); // Save to persistent storage
-    console.log('Deleted post:', req.params.id);
-    res.json({ message: 'Post deleted' });
-});
-
-// Debug endpoint
-app.get('/api/debug', (req, res) => {
-    console.log('=== DEBUG ENDPOINT CALLED ===');
-    console.log('Current blogPosts array:', blogPosts);
-    res.json({ 
-        message: 'Debug info',
-        timestamp: new Date().toISOString(),
-        totalPosts: blogPosts.length,
-        publishedPosts: blogPosts.filter(p => p.published === true).length,
-        allPosts: blogPosts,
-        publishedPostsOnly: blogPosts.filter(p => p.published === true)
-    });
-});
-
-// Test endpoint
-app.get('/api/test', (req, res) => {
-    res.json({ 
-        message: 'Simple server is working',
-        timestamp: new Date().toISOString(),
-        totalPosts: blogPosts.length,
-        publishedPosts: blogPosts.filter(p => p.published === true).length,
-        posts: blogPosts.map(p => ({ title: p.title, published: p.published }))
-    });
-});
-
-// Health check with storage status
-app.get('/api/health', (req, res) => {
-    const mainFileExists = fs.existsSync(POSTS_FILE);
-    const backupFileExists = fs.existsSync(BACKUP_FILE);
-    
-    res.json({ 
-        status: 'ok',
-        storage: {
-            mainFileExists,
-            backupFileExists,
-            totalPosts: blogPosts.length,
-            publishedPosts: blogPosts.filter(p => p.published === true).length
+        const result = await postsCollection.deleteOne(filter);
+        if (result.deletedCount > 0) {
+            res.json({ message: 'Post deleted successfully' });
+        } else {
+            res.status(404).json({ error: 'Post not found' });
         }
-    });
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        res.status(500).json({ error: 'Failed to delete post' });
+    }
+});
+
+// Post action: Share
+app.post('/api/posts/:id/share', async (req, res) => {
+    try {
+        const id = req.params.id;
+        let filter = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: id };
+
+        const result = await postsCollection.findOneAndUpdate(
+            filter,
+            { $inc: { shares: 1 } },
+            { returnDocument: 'after' }
+        );
+
+        if (result) {
+            res.json({ shares: result.shares });
+        } else {
+            res.status(404).json({ error: 'Post not found' });
+        }
+    } catch (error) {
+        console.error('Error sharing post:', error);
+        res.status(500).json({ error: 'Failed to share post' });
+    }
+});
+
+// Post action: Comment
+app.post('/api/posts/:id/comments', async (req, res) => {
+    try {
+        const id = req.params.id;
+        let filter = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: id };
+
+        const comment = {
+            id: new ObjectId().toString(),
+            name: req.body.name,
+            email: req.body.email,
+            content: req.body.content,
+            createdAt: new Date(),
+            approved: true // Auto-approve for now based on previous server-mongo logic
+        };
+
+        const result = await postsCollection.findOneAndUpdate(
+            filter,
+            {
+                $push: { comments: comment },
+                $inc: { commentsCount: 1 }
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (result) {
+            res.json(comment);
+        } else {
+            res.status(404).json({ error: 'Post not found' });
+        }
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).json({ error: 'Failed to add comment' });
+    }
+});
+
+// Health check
+app.get('/api/health', async (req, res) => {
+    try {
+        const isConnected = !!postsCollection;
+        const count = isConnected ? await postsCollection.countDocuments() : 0;
+        res.json({
+            status: isConnected ? 'ok' : 'error',
+            storage: 'mongodb-atlas',
+            connected: isConnected,
+            totalPosts: count,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: error.message });
+    }
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Simple blog server running on port ${PORT}`);
-    console.log('API endpoints available at: /api');
+app.listen(PORT, async () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    const connected = await connectAndMigrate();
+    if (!connected) {
+        console.error('⚠️ Server starting without database connection. Persistence will be UNAVAILABLE.');
+    }
 });

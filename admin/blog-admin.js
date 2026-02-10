@@ -142,7 +142,9 @@ async function savePost(publish = true) {
         return;
     }
 
-    let currentPostId = postId;
+    const category = document.getElementById('postCategoryInput').value;
+    let currentPostId = document.getElementById('postId').value;
+
     if (!currentPostId) {
         currentPostId = (await getNextId()).toString();
     }
@@ -163,9 +165,11 @@ async function savePost(publish = true) {
     try {
         let savedPost;
 
-        if (postId) {
+        const isUpdate = !!document.getElementById('postId').value;
+
+        if (isUpdate) {
             // Update existing post
-            savedPost = await apiRequest(`/posts/${postId}`, {
+            savedPost = await apiRequest(`/posts/${currentPostId}`, {
                 method: 'PUT',
                 body: JSON.stringify(postData),
             });
