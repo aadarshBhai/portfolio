@@ -39,9 +39,12 @@ const categoryNames = {
 };
 
 // Get next post ID
-function getNextId() {
-    const posts = loadPosts();
-    return posts.length > 0 ? Math.max(...posts.map(p => p.id)) + 1 : 1;
+async function getNextId() {
+    const posts = await fetchAllPosts();
+    return posts.length > 0 ? Math.max(...posts.map(p => {
+        const numericId = parseInt(p.id, 10);
+        return isNaN(numericId) ? 0 : numericId;
+    })) + 1 : Date.now();
 }
 
 // Format date
@@ -139,10 +142,13 @@ async function savePost(publish = true) {
         return;
     }
 
-    const postId = document.getElementById('postId').value;
-    const category = document.getElementById('postCategoryInput').value;
+    let currentPostId = postId;
+    if (!currentPostId) {
+        currentPostId = (await getNextId()).toString();
+    }
 
     const postData = {
+        id: currentPostId,
         title: document.getElementById('postTitleInput').value,
         excerpt: document.getElementById('postExcerptInput').value,
         category: category,
