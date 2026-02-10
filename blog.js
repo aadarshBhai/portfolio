@@ -369,7 +369,7 @@ function renderBlogPosts() {
                     <span class="blog-category">${post.categoryName || post.category}</span>
                     <span class="blog-date">${post.dateFormatted || post.date}</span>
                 </div>
-                <h3>${post.title}</h3>
+                <h3><a href="blog-post.html?id=${postId}">${post.title}</a></h3>
                 <p>${post.excerpt}</p>
             </div>
         </article> `
