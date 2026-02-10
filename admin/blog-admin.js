@@ -33,7 +33,9 @@ async function fetchAllPosts() {
 
 // Category name mapping
 const categoryNames = {
-    'passive-earning': 'Passive Income'
+    'news-politics': 'News and Politics',
+    'passive-earning': 'Passive Income',
+    'business-startup': 'Business and Startup'
 };
 
 // Get next post ID
@@ -268,16 +270,16 @@ function showNotification(message, type = 'info') {
         `;
         document.body.appendChild(notification);
     }
-    
+
     notification.textContent = message;
     notification.style.background = type === 'success' ? '#4CAF50' : '#2196F3';
-    
+
     // Show notification
     setTimeout(() => {
         notification.style.opacity = '1';
         notification.style.transform = 'translateX(0)';
     }, 100);
-    
+
     // Hide after 3 seconds
     setTimeout(() => {
         notification.style.opacity = '0';
