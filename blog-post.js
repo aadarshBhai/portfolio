@@ -4,6 +4,20 @@
 const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
+// Format date helper function
+function formatDate(dateString) {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        // If invalid date, try to parse as string
+        return dateString;
+    }
+    
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+}
+
 // API Configuration - will be set by config.js
 const API_BASE_URL = window.API_BASE_URL || 'http://127.0.0.1:5000/api';
 
@@ -194,7 +208,14 @@ function displayPost(post) {
     document.getElementById('postTitle').textContent = post.title;
     document.getElementById('postExcerpt').textContent = post.excerpt;
     document.getElementById('postCategory').textContent = post.categoryName || 'Passive Income';
-    document.getElementById('postDate').textContent = formatDate(post.date);
+    
+    // Handle date formatting
+    let dateStr = post.date;
+    if (post.createdAt) {
+        dateStr = new Date(post.createdAt).toISOString().split('T')[0];
+    }
+    document.getElementById('postDate').textContent = formatDate(dateStr);
+    
     document.getElementById('postContent').innerHTML = post.content;
 
     // Update stats
@@ -394,6 +415,10 @@ async function submitComment(event) {
                 }
             }, 5000);
             
+            // Refresh comments list and stats
+            loadComments();
+            refreshPostStats();
+            
         } else {
             alert('Failed to submit comment. Please try again.');
         }
@@ -403,9 +428,12 @@ async function submitComment(event) {
     }
 }
 
-// Increment share count
-async function incrementShare() {
+// Increment share count and open share dialog
+async function incrementShare(event, platform) {
+    event.preventDefault();
+    
     try {
+        // Increment share count on backend
         await fetch(`${API_BASE_URL}/posts/${postId}/share`, { method: 'POST' });
         
         // Update UI
@@ -413,8 +441,43 @@ async function incrementShare() {
         const currentShares = parseInt(sharesElement.textContent) || 0;
         sharesElement.textContent = currentShares + 1;
         
+        // Open share dialog
+        const url = encodeURIComponent(window.location.href);
+        const title = encodeURIComponent(document.getElementById('postTitle').textContent);
+        
+        let shareUrl;
+        switch(platform) {
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
+                break;
+            case 'linkedin':
+                shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+                break;
+            case 'facebook':
+                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+                break;
+        }
+        
+        window.open(shareUrl, '_blank', 'width=600,height=400');
+        
     } catch (error) {
         console.error('Error incrementing share:', error);
+    }
+}
+
+// Refresh post stats
+async function refreshPostStats() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/posts/${postId}`, { method: 'GET' });
+        if (response.ok) {
+            const post = await response.json();
+            // Update only the stats
+            document.getElementById('postViews').textContent = post.views || 0;
+            document.getElementById('postShares').textContent = post.shares || 0;
+            document.getElementById('postComments').textContent = (post.comments || []).length;
+        }
+    } catch (error) {
+        console.error('Error refreshing stats:', error);
     }
 }
 
@@ -429,7 +492,10 @@ if (postId) {
     }
     
     // Setup share buttons to increment count
-    document.getElementById('shareTwitter').addEventListener('click', incrementShare);
-    document.getElementById('shareLinkedIn').addEventListener('click', incrementShare);
-    document.getElementById('shareFacebook').addEventListener('click', incrementShare);
+    document.getElementById('shareTwitter').addEventListener('click', (e) => incrementShare(e, 'twitter'));
+    document.getElementById('shareLinkedIn').addEventListener('click', (e) => incrementShare(e, 'linkedin'));
+    document.getElementById('shareFacebook').addEventListener('click', (e) => incrementShare(e, 'facebook'));
+    
+    // Refresh stats every 30 seconds for real-time updates
+    setInterval(refreshPostStats, 30000);
 }
