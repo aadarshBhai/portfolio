@@ -4,7 +4,7 @@ services:
     name: portfolio-backend
     env: node
     buildCommand: "npm install"
-    startCommand: "node simple-blog-server.js"
+    startCommand: "node server-mongo.js"
     envVars:
       - key: NODE_ENV
         value: production

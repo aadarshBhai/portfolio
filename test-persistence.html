@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Post Persistence</title>
+    <script src="config.js"></script>
+</head>
+<body>
+    <h1>Test Post Persistence</h1>
+    <p>API URL: <span id="apiUrl"></span></p>
+    
+    <button onclick="createTestPost()">Create Test Post</button>
+    <button onclick="checkPosts()">Check Posts</button>
+    <button onclick="deleteTestPost()">Delete Test Post</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('apiUrl').textContent = window.API_BASE_URL;
+        
+        let testPostId = null;
+        
+        async function createTestPost() {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/posts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        title: 'Test Post ' + Date.now(), 
+                        excerpt: 'This is a test post for persistence',
+                        category: 'passive-earning',
+                        categoryName: 'Passive Income',
+                        date: new Date().toISOString().split('T')[0],
+                        content: '<p>This is a test post to check if it persists.</p>',
+                        published: true
+                    })
+                });
+                const result = await response.json();
+                testPostId = result.id;
+                document.getElementById('result').innerHTML = `<pre>Created Post: ${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function checkPosts() {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/posts`);
+                const posts = await response.json();
+                document.getElementById('result').innerHTML = `<pre>Total Posts: ${posts.length}\n${posts.map(p => `- ${p.title} (${p.id})`).join('\n')}</pre>`;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function deleteTestPost() {
+            if (!testPostId) {
+                alert('No test post to delete');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/posts/${testPostId}`, { method: 'DELETE' });
+                document.getElementById('result').innerHTML = `<pre>Deleted Post: ${testPostId}</pre>`;
+                testPostId = null;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

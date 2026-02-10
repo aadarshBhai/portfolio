@@ -1,1 +1,1 @@
-web: node simple-blog-server.js
+web: node server-mongo.js

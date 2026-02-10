@@ -4,7 +4,7 @@ const path = require('path');
 console.log('Starting Backend and Frontend servers...');
 
 // Start Backend Server
-const backend = spawn('node', ['simple-blog-server.js'], {
+const backend = spawn('node', ['server-mongo.js'], {
     cwd: __dirname,
     stdio: 'inherit'
 });
