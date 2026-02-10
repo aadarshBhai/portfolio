@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Share Functionality</title>
+    <script src="config.js"></script>
+</head>
+<body>
+    <h1>Test Share and Comment</h1>
+    <p>Post ID: 1770651699034</p>
+    <p>API URL: <span id="apiUrl"></span></p>
+    
+    <button onclick="testShare()">Test Share</button>
+    <button onclick="testComment()">Test Comment</button>
+    <button onclick="testGetPost()">Get Post Stats</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('apiUrl').textContent = window.API_BASE_URL;
+        
+        const postId = '1770651699034';
+        
+        async function testShare() {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/posts/${postId}/share`, { method: 'POST' });
+                const result = await response.json();
+                document.getElementById('result').innerHTML = `<pre>Share Result: ${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<pre>Share Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function testComment() {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/posts/${postId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        name: 'Test User', 
+                        email: 'test@example.com', 
+                        content: 'Test comment from test page' 
+                    })
+                });
+                const result = await response.json();
+                document.getElementById('result').innerHTML = `<pre>Comment Result: ${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<pre>Comment Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function testGetPost() {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/posts/${postId}`, { method: 'GET' });
+                const result = await response.json();
+                document.getElementById('result').innerHTML = `<pre>Post Stats: ${JSON.stringify({
+                    views: result.views,
+                    shares: result.shares,
+                    comments: result.comments ? result.comments.length : 0
+                }, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<pre>Get Post Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>
