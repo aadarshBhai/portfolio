@@ -33,9 +33,7 @@ async function fetchAllPosts() {
 
 // Category name mapping
 const categoryNames = {
-    'news-politics': 'News and Politics',
-    'passive-earning': 'Passive Earning',
-    'business-startup': 'Business and Startup'
+    'passive-earning': 'Passive Income'
 };
 
 // Get next post ID
