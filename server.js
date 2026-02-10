@@ -7,11 +7,19 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Enhanced persistent storage with fallback
-const POSTS_FILE = path.join(__dirname, 'posts.json');
-const BACKUP_FILE = path.join(__dirname, 'posts-backup.json');
+// Use /tmp directory on Render for persistent storage
+const isRender = process.env.RENDER === 'true';
+const storageDir = isRender ? '/tmp' : __dirname;
+const POSTS_FILE = path.join(storageDir, 'posts.json');
+const BACKUP_FILE = path.join(storageDir, 'posts-backup.json');
+
+console.log('Storage directory:', storageDir);
+console.log('Is Render environment:', isRender);
 
 // Load posts from file with multiple fallbacks
 let blogPosts = [];
+let inMemoryPosts = []; // In-memory backup
+
 function loadPostsFromFile() {
     console.log('=== LOADING POSTS FROM STORAGE ===');
     try {
@@ -24,8 +32,14 @@ function loadPostsFromFile() {
             blogPosts = JSON.parse(data);
             console.log(`✅ Loaded posts from backup file: ${blogPosts.length}`);
         } else {
-            blogPosts = [];
-            console.log('⚠️ No existing posts file found, starting fresh');
+            // If no files exist, use in-memory backup if available
+            if (inMemoryPosts.length > 0) {
+                blogPosts = [...inMemoryPosts];
+                console.log(`✅ Restored from in-memory backup: ${blogPosts.length}`);
+            } else {
+                blogPosts = [];
+                console.log('⚠️ No existing posts file found, starting fresh');
+            }
         }
         
         // Ensure all posts have the new fields
@@ -49,9 +63,19 @@ function loadPostsFromFile() {
             savePostsToFile();
             console.log('✅ Updated existing posts with new fields');
         }
+        
+        // Update in-memory backup
+        inMemoryPosts = [...blogPosts];
+        
     } catch (error) {
         console.error('❌ Error loading posts:', error);
-        blogPosts = [];
+        // Use in-memory backup as last resort
+        if (inMemoryPosts.length > 0) {
+            blogPosts = [...inMemoryPosts];
+            console.log(`✅ Using in-memory backup due to error: ${blogPosts.length}`);
+        } else {
+            blogPosts = [];
+        }
     }
 }
 
@@ -69,11 +93,15 @@ function savePostsToFile() {
         fs.writeFileSync(BACKUP_FILE, JSON.stringify(blogPosts, null, 2));
         console.log('✅ Created backup file');
         
-        // Log current posts for debugging
-        console.log('Current posts:', blogPosts.map(p => ({ id: p.id, title: p.title, published: p.published })));
+        // Update in-memory backup
+        inMemoryPosts = [...blogPosts];
+        console.log('✅ Updated in-memory backup');
         
+        console.log('Current posts:', blogPosts.map(p => ({ id: p.id, title: p.title, published: p.published })));
     } catch (error) {
-        console.error('❌ Error saving posts:', error.message);
+        console.error('❌ Error saving posts:', error);
+        // Still update in-memory backup even if file save fails
+        inMemoryPosts = [...blogPosts];
     }
 }
 
