@@ -320,7 +320,6 @@ async function loadRelatedPosts(category, currentPostId) {
                 </div>
                 <h3>${post.title}</h3>
                 <p>${post.excerpt}</p>
-                <a href="blog-post.html?id=${post.id}" class="read-more">Read More →</a>
             </div>
         </article>
     `).join('');

@@ -371,9 +371,8 @@ function renderBlogPosts() {
                 </div>
                 <h3>${post.title}</h3>
                 <p>${post.excerpt}</p>
-                <a href="blog-post.html?id=${postId}" class="read-more">Read More →</a>
             </div>
-        </article>`;
+        </article> `
     }).join('');
 
     console.log('Generated HTML length:', postsHTML.length);
