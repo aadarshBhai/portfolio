@@ -14,34 +14,45 @@ const BACKUP_FILE = path.join(__dirname, 'posts-backup.json');
 let blogPosts = [];
 function loadPostsFromFile() {
     console.log('=== LOADING POSTS FROM STORAGE ===');
-    
-    // Try main file first
     try {
         if (fs.existsSync(POSTS_FILE)) {
             const data = fs.readFileSync(POSTS_FILE, 'utf8');
             blogPosts = JSON.parse(data);
-            console.log('✅ Loaded posts from main file:', blogPosts.length);
-            return;
-        }
-    } catch (error) {
-        console.error('❌ Error loading main posts file:', error.message);
-    }
-    
-    // Try backup file
-    try {
-        if (fs.existsSync(BACKUP_FILE)) {
+            console.log(`✅ Loaded posts from main file: ${blogPosts.length}`);
+        } else if (fs.existsSync(BACKUP_FILE)) {
             const data = fs.readFileSync(BACKUP_FILE, 'utf8');
             blogPosts = JSON.parse(data);
-            console.log('✅ Loaded posts from backup file:', blogPosts.length);
-            return;
+            console.log(`✅ Loaded posts from backup file: ${blogPosts.length}`);
+        } else {
+            blogPosts = [];
+            console.log('⚠️ No existing posts file found, starting fresh');
+        }
+        
+        // Ensure all posts have the new fields
+        let updated = false;
+        blogPosts.forEach(post => {
+            if (post.views === undefined) {
+                post.views = 0;
+                updated = true;
+            }
+            if (post.shares === undefined) {
+                post.shares = 0;
+                updated = true;
+            }
+            if (post.comments === undefined) {
+                post.comments = [];
+                updated = true;
+            }
+        });
+        
+        if (updated) {
+            savePostsToFile();
+            console.log('✅ Updated existing posts with new fields');
         }
     } catch (error) {
-        console.error('❌ Error loading backup posts file:', error.message);
+        console.error('❌ Error loading posts:', error);
+        blogPosts = [];
     }
-    
-    // Start with empty array
-    blogPosts = [];
-    console.log('⚠️ No posts files found, starting empty');
 }
 
 // Save posts to file with backup
