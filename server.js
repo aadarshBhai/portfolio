@@ -58,6 +58,21 @@ app.get('/api/posts', (req, res) => {
     res.json(publishedPosts);
 });
 
+// Get single post by ID
+app.get('/api/posts/:id', (req, res) => {
+    const postId = req.params.id;
+    const post = blogPosts.find(p => p.id === postId);
+    console.log('=== GET /api/posts/:id ===');
+    console.log('Looking for post ID:', postId);
+    console.log('Found post:', post ? post.title : 'Not found');
+    
+    if (post) {
+        res.json(post);
+    } else {
+        res.status(404).json({ error: 'Post not found' });
+    }
+});
+
 app.post('/api/posts', (req, res) => {
     console.log('=== POST /api/posts RECEIVED ===');
     console.log('Request body:', req.body);
