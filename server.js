@@ -6,39 +6,76 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// File-based persistent storage
+// Enhanced persistent storage with fallback
 const POSTS_FILE = path.join(__dirname, 'posts.json');
+const BACKUP_FILE = path.join(__dirname, 'posts-backup.json');
 
-// Load posts from file
+// Load posts from file with multiple fallbacks
 let blogPosts = [];
 function loadPostsFromFile() {
+    console.log('=== LOADING POSTS FROM STORAGE ===');
+    
+    // Try main file first
     try {
         if (fs.existsSync(POSTS_FILE)) {
             const data = fs.readFileSync(POSTS_FILE, 'utf8');
             blogPosts = JSON.parse(data);
-            console.log('Loaded posts from file:', blogPosts.length);
-        } else {
-            blogPosts = [];
-            console.log('No posts file found, starting empty');
+            console.log('✅ Loaded posts from main file:', blogPosts.length);
+            return;
         }
     } catch (error) {
-        console.error('Error loading posts:', error);
-        blogPosts = [];
+        console.error('❌ Error loading main posts file:', error.message);
     }
+    
+    // Try backup file
+    try {
+        if (fs.existsSync(BACKUP_FILE)) {
+            const data = fs.readFileSync(BACKUP_FILE, 'utf8');
+            blogPosts = JSON.parse(data);
+            console.log('✅ Loaded posts from backup file:', blogPosts.length);
+            return;
+        }
+    } catch (error) {
+        console.error('❌ Error loading backup posts file:', error.message);
+    }
+    
+    // Start with empty array
+    blogPosts = [];
+    console.log('⚠️ No posts files found, starting empty');
 }
 
-// Save posts to file
+// Save posts to file with backup
 function savePostsToFile() {
+    console.log('=== SAVING POSTS TO STORAGE ===');
+    console.log('Posts to save:', blogPosts.length);
+    
     try {
+        // Save to main file
         fs.writeFileSync(POSTS_FILE, JSON.stringify(blogPosts, null, 2));
-        console.log('Saved posts to file:', blogPosts.length);
+        console.log('✅ Saved to main file');
+        
+        // Create backup
+        fs.writeFileSync(BACKUP_FILE, JSON.stringify(blogPosts, null, 2));
+        console.log('✅ Created backup file');
+        
+        // Log current posts for debugging
+        console.log('Current posts:', blogPosts.map(p => ({ id: p.id, title: p.title, published: p.published })));
+        
     } catch (error) {
-        console.error('Error saving posts:', error);
+        console.error('❌ Error saving posts:', error.message);
     }
 }
 
 // Load posts on startup
 loadPostsFromFile();
+
+// Auto-save every 30 seconds as additional safety
+setInterval(() => {
+    if (blogPosts.length > 0) {
+        savePostsToFile();
+        console.log('🔄 Auto-saved posts');
+    }
+}, 30000);
 
 // Middleware
 app.use(cors({
@@ -136,9 +173,20 @@ app.get('/api/test', (req, res) => {
     });
 });
 
-// Health check
+// Health check with storage status
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok' });
+    const mainFileExists = fs.existsSync(POSTS_FILE);
+    const backupFileExists = fs.existsSync(BACKUP_FILE);
+    
+    res.json({ 
+        status: 'ok',
+        storage: {
+            mainFileExists,
+            backupFileExists,
+            totalPosts: blogPosts.length,
+            publishedPosts: blogPosts.filter(p => p.published === true).length
+        }
+    });
 });
 
 // Start server
