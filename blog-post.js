@@ -193,21 +193,26 @@ async function loadPost() {
 function displayPost(post) {
     document.getElementById('postTitle').textContent = post.title;
     document.getElementById('postExcerpt').textContent = post.excerpt;
-    document.getElementById('postCategory').textContent = post.categoryName;
-    document.getElementById('postDate').textContent = post.dateFormatted;
+    document.getElementById('postCategory').textContent = post.categoryName || 'Passive Income';
+    document.getElementById('postDate').textContent = formatDate(post.date);
+    document.getElementById('postContent').innerHTML = post.content;
+
+    // Update stats
+    document.getElementById('postViews').textContent = post.views || 0;
+    document.getElementById('postShares').textContent = post.shares || 0;
+    document.getElementById('postComments').textContent = (post.comments || []).length;
+
+    // Set image
+    const postImage = document.getElementById('postImage');
+    if (post.image) {
+        postImage.src = post.image;
+    }
+
+    // Update breadcrumb
     document.getElementById('currentPost').textContent = post.title;
 
-    // Set featured image
-    const postImage = document.getElementById('postImage');
-    postImage.src = post.image;
-    postImage.alt = post.title;
-
-    // Set content (parse markdown-like content)
-    const contentElement = document.getElementById('postContent');
-    contentElement.innerHTML = parseMarkdown(post.content || '<p>Content coming soon...</p>');
-
-    // Update page title
-    document.title = `${post.title} | Aadarsh Kumar`;
+    // Load comments
+    loadComments();
 }
 
 // Simple Markdown Parser
@@ -311,7 +316,120 @@ function setupSocialSharing(post) {
     document.getElementById('shareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
 }
 
+// Load comments
+async function loadComments() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`, { method: 'GET' });
+        if (response.ok) {
+            const comments = await response.json();
+            displayComments(comments);
+        } else {
+            console.error('Failed to load comments:', response.status);
+        }
+    } catch (error) {
+        console.error('Error loading comments:', error);
+    }
+}
+
+// Display comments
+function displayComments(comments) {
+    const container = document.getElementById('commentsContainer');
+    const countElement = document.getElementById('commentsCount');
+    
+    countElement.textContent = comments.length;
+    
+    if (comments.length === 0) {
+        container.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment!</p>';
+        return;
+    }
+    
+    container.innerHTML = comments.map(comment => `
+        <div class="comment">
+            <div class="comment-header">
+                <strong>${comment.name}</strong>
+                <span class="comment-date">${formatDate(comment.createdAt)}</span>
+            </div>
+            <div class="comment-content">${comment.content}</div>
+        </div>
+    `).join('');
+}
+
+// Submit comment
+async function submitComment(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('commentName').value;
+    const email = document.getElementById('commentEmail').value;
+    const content = document.getElementById('commentContent').value;
+    
+    if (!name || !email || !content) {
+        alert('Please fill in all fields');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email, content })
+        });
+        
+        if (response.ok) {
+            // Clear form
+            document.getElementById('newCommentForm').reset();
+            
+            // Show success message
+            const form = document.getElementById('commentForm');
+            const successMsg = document.createElement('div');
+            successMsg.className = 'comment-success';
+            successMsg.textContent = 'Comment submitted! It will be visible after approval.';
+            form.appendChild(successMsg);
+            
+            // Remove message after 5 seconds
+            setTimeout(() => {
+                if (successMsg.parentNode) {
+                    successMsg.parentNode.removeChild(successMsg);
+                }
+            }, 5000);
+            
+        } else {
+            alert('Failed to submit comment. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error submitting comment:', error);
+        alert('Failed to submit comment. Please try again.');
+    }
+}
+
+// Increment share count
+async function incrementShare() {
+    try {
+        await fetch(`${API_BASE_URL}/posts/${postId}/share`, { method: 'POST' });
+        
+        // Update UI
+        const sharesElement = document.getElementById('postShares');
+        const currentShares = parseInt(sharesElement.textContent) || 0;
+        sharesElement.textContent = currentShares + 1;
+        
+    } catch (error) {
+        console.error('Error incrementing share:', error);
+    }
+}
+
 // Initialize on page load
 if (postId) {
     loadPost();
+    
+    // Setup comment form
+    const commentForm = document.getElementById('newCommentForm');
+    if (commentForm) {
+        commentForm.addEventListener('submit', submitComment);
+    }
+    
+    // Setup share buttons to increment count
+    document.getElementById('shareTwitter').addEventListener('click', incrementShare);
+    document.getElementById('shareLinkedIn').addEventListener('click', incrementShare);
+    document.getElementById('shareFacebook').addEventListener('click', incrementShare);
 }

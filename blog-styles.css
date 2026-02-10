@@ -1,4 +1,4 @@
-/* Blog-Specific Styles */
+/* Blog-Specific Styles - Enhanced with Stats and Comments */
 
 /* Blog Hero */
 #blog-hero {
@@ -447,8 +447,9 @@
     justify-content: center;
     width: 40px;
     height: 40px;
-    border: 1px solid var(--border);
     border-radius: 50%;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     transition: var(--transition);
 }
 

@@ -104,7 +104,65 @@ app.get('/api/posts/:id', (req, res) => {
     console.log('Found post:', post ? post.title : 'Not found');
     
     if (post) {
+        // Increment views
+        post.views = (post.views || 0) + 1;
+        savePostsToFile(); // Save updated view count
         res.json(post);
+    } else {
+        res.status(404).json({ error: 'Post not found' });
+    }
+});
+
+// Increment share count
+app.post('/api/posts/:id/share', (req, res) => {
+    const postId = req.params.id;
+    const post = blogPosts.find(p => p.id === postId);
+    console.log('=== POST /api/posts/:id/share ===');
+    console.log('Sharing post ID:', postId);
+    
+    if (post) {
+        post.shares = (post.shares || 0) + 1;
+        savePostsToFile(); // Save updated share count
+        res.json({ shares: post.shares });
+    } else {
+        res.status(404).json({ error: 'Post not found' });
+    }
+});
+
+// Add comment to post
+app.post('/api/posts/:id/comments', (req, res) => {
+    const postId = req.params.id;
+    const post = blogPosts.find(p => p.id === postId);
+    console.log('=== POST /api/posts/:id/comments ===');
+    console.log('Adding comment to post ID:', postId);
+    
+    if (post) {
+        const comment = {
+            id: Date.now().toString(),
+            ...req.body,
+            createdAt: new Date(),
+            approved: false // Comments need approval
+        };
+        
+        if (!post.comments) {
+            post.comments = [];
+        }
+        post.comments.push(comment);
+        savePostsToFile(); // Save updated comments
+        res.json(comment);
+    } else {
+        res.status(404).json({ error: 'Post not found' });
+    }
+});
+
+// Get comments for post
+app.get('/api/posts/:id/comments', (req, res) => {
+    const postId = req.params.id;
+    const post = blogPosts.find(p => p.id === postId);
+    
+    if (post) {
+        const approvedComments = (post.comments || []).filter(c => c.approved);
+        res.json(approvedComments);
     } else {
         res.status(404).json({ error: 'Post not found' });
     }
@@ -117,7 +175,10 @@ app.post('/api/posts', (req, res) => {
     const post = {
         id: Date.now().toString(),
         ...req.body,
-        createdAt: new Date()
+        createdAt: new Date(),
+        views: 0,
+        shares: 0,
+        comments: []
     };
     blogPosts.unshift(post);
     savePostsToFile(); // Save to persistent storage
