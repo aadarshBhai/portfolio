@@ -49,11 +49,12 @@ app.use(express.json());
 
 // Helper function to convert ObjectId to string
 function postToJSON(post) {
-    return {
-        ...post,
-        id: post._id.toString(),
-        _id: undefined // Remove MongoDB _id from response
-    };
+    const json = { ...post };
+    if (!json.id && json._id) {
+        json.id = json._id.toString();
+    }
+    delete json._id;
+    return json;
 }
 
 // Get all published posts

@@ -7,13 +7,13 @@ const postId = urlParams.get('id');
 // Format date helper function
 function formatDate(dateString) {
     if (!dateString) return '';
-    
+
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
         // If invalid date, try to parse as string
         return dateString;
     }
-    
+
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return date.toLocaleDateString('en-US', options);
 }
@@ -208,14 +208,14 @@ function displayPost(post) {
     document.getElementById('postTitle').textContent = post.title;
     document.getElementById('postExcerpt').textContent = post.excerpt;
     document.getElementById('postCategory').textContent = post.categoryName || 'Passive Income';
-    
+
     // Handle date formatting
     let dateStr = post.date;
     if (post.createdAt) {
         dateStr = new Date(post.createdAt).toISOString().split('T')[0];
     }
     document.getElementById('postDate').textContent = formatDate(dateStr);
-    
+
     document.getElementById('postContent').innerHTML = post.content;
 
     // Update stats
@@ -356,14 +356,14 @@ async function loadComments() {
 function displayComments(comments) {
     const container = document.getElementById('commentsContainer');
     const countElement = document.getElementById('commentsCount');
-    
+
     countElement.textContent = comments.length;
-    
+
     if (comments.length === 0) {
         container.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment!</p>';
         return;
     }
-    
+
     container.innerHTML = comments.map(comment => `
         <div class="comment">
             <div class="comment-header">
@@ -378,16 +378,16 @@ function displayComments(comments) {
 // Submit comment
 async function submitComment(event) {
     event.preventDefault();
-    
+
     const name = document.getElementById('commentName').value;
     const email = document.getElementById('commentEmail').value;
     const content = document.getElementById('commentContent').value;
-    
+
     if (!name || !email || !content) {
         alert('Please fill in all fields');
         return;
     }
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`, {
             method: 'POST',
@@ -396,29 +396,29 @@ async function submitComment(event) {
             },
             body: JSON.stringify({ name, email, content })
         });
-        
+
         if (response.ok) {
             // Clear form
             document.getElementById('newCommentForm').reset();
-            
+
             // Show success message
             const form = document.getElementById('commentForm');
             const successMsg = document.createElement('div');
             successMsg.className = 'comment-success';
-            successMsg.textContent = 'Comment submitted! It will be visible after approval.';
+            successMsg.textContent = 'Comment submitted! It is now visible.';
             form.appendChild(successMsg);
-            
+
             // Remove message after 5 seconds
             setTimeout(() => {
                 if (successMsg.parentNode) {
                     successMsg.parentNode.removeChild(successMsg);
                 }
             }, 5000);
-            
+
             // Refresh comments list and stats
             loadComments();
             refreshPostStats();
-            
+
         } else {
             alert('Failed to submit comment. Please try again.');
         }
@@ -431,22 +431,22 @@ async function submitComment(event) {
 // Increment share count and open share dialog
 async function incrementShare(event, platform) {
     event.preventDefault();
-    
+
     try {
         // Increment share count on backend
         await fetch(`${API_BASE_URL}/posts/${postId}/share`, { method: 'POST' });
-        
+
         // Update UI
         const sharesElement = document.getElementById('postShares');
         const currentShares = parseInt(sharesElement.textContent) || 0;
         sharesElement.textContent = currentShares + 1;
-        
+
         // Open share dialog
         const url = encodeURIComponent(window.location.href);
         const title = encodeURIComponent(document.getElementById('postTitle').textContent);
-        
+
         let shareUrl;
-        switch(platform) {
+        switch (platform) {
             case 'twitter':
                 shareUrl = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
                 break;
@@ -457,9 +457,9 @@ async function incrementShare(event, platform) {
                 shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
                 break;
         }
-        
+
         window.open(shareUrl, '_blank', 'width=600,height=400');
-        
+
     } catch (error) {
         console.error('Error incrementing share:', error);
     }
@@ -484,18 +484,18 @@ async function refreshPostStats() {
 // Initialize on page load
 if (postId) {
     loadPost();
-    
+
     // Setup comment form
     const commentForm = document.getElementById('newCommentForm');
     if (commentForm) {
         commentForm.addEventListener('submit', submitComment);
     }
-    
+
     // Setup share buttons to increment count
     document.getElementById('shareTwitter').addEventListener('click', (e) => incrementShare(e, 'twitter'));
     document.getElementById('shareLinkedIn').addEventListener('click', (e) => incrementShare(e, 'linkedin'));
     document.getElementById('shareFacebook').addEventListener('click', (e) => incrementShare(e, 'facebook'));
-    
+
     // Refresh stats every 30 seconds for real-time updates
     setInterval(refreshPostStats, 30000);
 }
