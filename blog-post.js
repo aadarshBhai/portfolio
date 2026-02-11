@@ -53,6 +53,7 @@ function displayPost(post) {
         if (el) el.innerHTML = html;
     };
 
+    // Update Page Content
     safeSetText('postTitle', post.title);
     safeSetText('postExcerpt', post.excerpt);
     safeSetText('postDate', formatDate(post.createdAt || post.date));
@@ -63,7 +64,66 @@ function displayPost(post) {
     safeSetText('currentPost', post.title);
 
     const postImage = document.getElementById('postImage');
-    if (postImage && post.image) postImage.src = post.image;
+    if (postImage && post.image) {
+        postImage.src = post.image;
+        postImage.alt = post.title; // Better SEO
+    }
+
+    // Dynamic SEO Updates
+    document.title = `${post.title} | Aadarsh Kumar Blog`;
+
+    // Update Meta Description
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+        metaDesc = document.createElement('meta');
+        metaDesc.name = "description";
+        document.head.appendChild(metaDesc);
+    }
+    const description = post.excerpt || `${post.title} - A blog post by Aadarsh Kumar`;
+    metaDesc.content = description;
+
+    // Update OG & Twitter Tags
+    const updateMeta = (id, content, attr = 'content') => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute(attr, content);
+    };
+
+    updateMeta('og-url', window.location.href);
+    updateMeta('og-title', post.title);
+    updateMeta('og-desc', description);
+    updateMeta('og-image', post.image || '');
+
+    updateMeta('twitter-url', window.location.href);
+    updateMeta('twitter-title', post.title);
+    updateMeta('twitter-desc', description);
+    updateMeta('twitter-image', post.image || '');
+
+    // Add JSON-LD Structured Data for Google
+    const schemaData = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": post.title,
+        "description": post.excerpt,
+        "image": post.image || "",
+        "author": {
+            "@type": "Person",
+            "name": "Aadarsh Kumar"
+        },
+        "datePublished": post.createdAt || post.date,
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": window.location.href
+        }
+    };
+
+    let script = document.getElementById('blog-schema');
+    if (!script) {
+        script = document.createElement('script');
+        script.id = 'blog-schema';
+        script.type = 'application/ld+json';
+        document.head.appendChild(script);
+    }
+    script.text = JSON.stringify(schemaData);
 
     loadComments();
 }

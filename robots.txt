@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /config.js
+Disallow: /server.js
+Disallow: /server-mongo.js
+
+Sitemap: https://aadarshgolucky.netlify.app/sitemap.xml
