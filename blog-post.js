@@ -244,9 +244,9 @@ async function loadRelatedPosts(currentId) {
                             <div class="blog-meta">
                                 <span class="blog-date">${formatDate(p.createdAt || p.date)}</span>
                             </div>
-                            <h3>${p.title}</h3>
+                            <h3><a href="blog-post.html?id=${p._id || p.id}">${p.title}</a></h3>
                             <p>${p.excerpt}</p>
-                            <a href="blog-post.html?id=${p._id || p.id}" class="read-more">Read More →</a>
+                            <a href="blog-post.html?id=${p._id || p.id}" class="read-more">Read More &rarr;</a>
                         </div>
                     </article>
                 `).join('');

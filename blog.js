@@ -81,6 +81,7 @@ function renderBlogPosts() {
                 </div>
                 <h3><a href="blog-post.html?id=${postId}">${post.title}</a></h3>
                 <p>${post.excerpt}</p>
+                <a href="blog-post.html?id=${postId}" class="read-more">Read More &rarr;</a>
             </div>
         </article> `;
     }).join('');
