@@ -56,8 +56,16 @@ function displayPost(post) {
     // Update Page Content
     safeSetText('postTitle', post.title);
     safeSetText('postExcerpt', post.excerpt);
+    safeSetText('postCategory', post.categoryName || post.category || 'Blog');
     safeSetText('postDate', formatDate(post.createdAt || post.date));
-    safeSetHTML('postContent', post.content);
+
+    // Parse Markdown content if marked is available
+    if (typeof marked !== 'undefined') {
+        safeSetHTML('postContent', marked.parse(post.content || ''));
+    } else {
+        safeSetHTML('postContent', post.content);
+    }
+
     safeSetText('postViews', post.views || 0);
     safeSetText('postShares', post.shares || 0);
     safeSetText('postComments', (post.comments || []).length);
@@ -267,3 +275,12 @@ if (postId) {
         if (el) el.addEventListener('click', (e) => incrementShare(e, platform));
     });
 }
+
+// Reading Progress Listener
+window.addEventListener('scroll', () => {
+    const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const scrolled = (winScroll / height) * 100;
+    const progressBarr = document.getElementById('reading-progress');
+    if (progressBarr) progressBarr.style.width = scrolled + "%";
+});

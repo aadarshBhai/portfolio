@@ -32,6 +32,7 @@
     <link rel="stylesheet" href="style.css?v=2">
     <link rel="stylesheet" href="blog-styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="config.js"></script>
 </head>
 
@@ -40,6 +41,9 @@
     <div id="loader">
         <div class="loader-text">Loading...</div>
     </div>
+
+    <!-- Reading Progress Bar -->
+    <div id="reading-progress"></div>
 
     <header id="header">
         <div class="container nav">
@@ -76,6 +80,7 @@
                 <header class="post-header reveal">
                     <div class="post-meta">
 
+                        <span class="post-category" id="postCategory">Blog</span>
                         <span class="post-date" id="postDate">Date</span>
                     </div>
                     <h1 id="postTitle">Blog Post Title</h1>
