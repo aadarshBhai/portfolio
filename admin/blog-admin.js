@@ -31,13 +31,6 @@ async function fetchAllPosts() {
     }
 }
 
-// Category name mapping
-const categoryNames = {
-    'news-politics': 'News and Politics',
-    'passive-earning': 'Passive Income',
-    'business-startup': 'Business and Startup'
-};
-
 // Get next post ID
 async function getNextId() {
     const posts = await fetchAllPosts();
@@ -55,19 +48,18 @@ function formatDate(dateString) {
 
 // Update statistics (takes posts array)
 function updateStatistics(posts) {
-    document.getElementById('totalPosts').textContent = posts.length;
-
-    const categories = new Set(posts.map(p => p.category));
-    document.getElementById('totalCategories').textContent = categories.size;
+    const totalPostsElem = document.getElementById('totalPosts');
+    if (totalPostsElem) totalPostsElem.textContent = posts.length;
 }
 
 // Update recent posts list (takes posts array)
 function updateRecentPosts(posts) {
     const recentPosts = posts.slice(0, 5);
     const list = document.getElementById('recentPostsList');
+    if (!list) return;
 
     list.innerHTML = recentPosts.map(post => `
-        <li><a href="#" data-id="${post.id}" class="edit-post-link">${post.title}</a></li>
+        <li><a href="#" data-id="${post.id || post._id}" class="edit-post-link">${post.title}</a></li>
     `).join('');
 
     // Add click handlers
@@ -83,14 +75,13 @@ function updateRecentPosts(posts) {
 // Load post into editor
 async function loadPostToEditor(id) {
     const posts = await fetchAllPosts();
-    const post = posts.find(p => p.id === id);
+    const post = posts.find(p => (p.id === id || p._id === id));
 
     if (post) {
-        document.getElementById('postId').value = post.id;
+        document.getElementById('postId').value = post.id || post._id;
         document.getElementById('postTitleInput').value = post.title;
         document.getElementById('postExcerptInput').value = post.excerpt;
-        document.getElementById('postCategoryInput').value = post.category;
-        document.getElementById('postDateInput').value = post.date;
+        document.getElementById('postDateInput').value = post.date || new Date().toISOString().split('T')[0];
         document.getElementById('postImageInput').value = post.image || '';
         document.getElementById('postContentInput').value = post.content || '';
         document.getElementById('postPublishedInput').checked = post.published;
@@ -105,7 +96,8 @@ async function loadPostToEditor(id) {
 
 // Clear editor form
 function clearEditor() {
-    document.getElementById('blogPostForm').reset();
+    const form = document.getElementById('blogPostForm');
+    if (form) form.reset();
     document.getElementById('postId').value = '';
     document.getElementById('editorTitle').textContent = 'Create New Post';
 
@@ -118,19 +110,23 @@ function clearEditor() {
 
 // Update preview
 function updatePreview() {
+    const titleElem = document.getElementById('previewTitle');
+    const excerptElem = document.getElementById('previewExcerpt');
+    const dateElem = document.getElementById('previewDate');
+    const imageElem = document.getElementById('previewImage');
+
+    if (!titleElem) return;
+
     const title = document.getElementById('postTitleInput').value || 'Your Title Here';
     const excerpt = document.getElementById('postExcerptInput').value || 'Your excerpt will appear here...';
-    const category = document.getElementById('postCategoryInput').value;
-    const categoryName = categoryNames[category] || 'Category';
     const date = document.getElementById('postDateInput').value;
     const dateFormatted = date ? formatDate(date) : 'Date';
     const image = document.getElementById('postImageInput').value || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/%3E%3Ctext fill=%22%23999%22 font-family=%22sans-serif%22 font-size=%2224%22 dy=%2210.5%22 font-weight=%22bold%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22%3EBlog Image%3C/text%3E%3C/svg%3E';
 
-    document.getElementById('previewTitle').textContent = title;
-    document.getElementById('previewExcerpt').textContent = excerpt;
-    document.getElementById('previewCategory').textContent = categoryName;
-    document.getElementById('previewDate').textContent = dateFormatted;
-    document.getElementById('previewImage').src = image;
+    titleElem.textContent = title;
+    excerptElem.textContent = excerpt;
+    if (dateElem) dateElem.textContent = dateFormatted;
+    if (imageElem) imageElem.src = image;
 }
 
 // Save (publish or draft) via API
@@ -142,30 +138,23 @@ async function savePost(publish = true) {
         return;
     }
 
-    const category = document.getElementById('postCategoryInput').value;
     let currentPostId = document.getElementById('postId').value;
-
-    if (!currentPostId) {
-        currentPostId = (await getNextId()).toString();
-    }
+    const isUpdate = !!currentPostId;
 
     const postData = {
-        id: currentPostId,
         title: document.getElementById('postTitleInput').value,
         excerpt: document.getElementById('postExcerptInput').value,
-        category: category,
-        categoryName: categoryNames[category],
+        category: 'blog', // Default category since selector was removed
+        categoryName: 'Blog',
         date: document.getElementById('postDateInput').value,
         dateFormatted: formatDate(document.getElementById('postDateInput').value),
         image: document.getElementById('postImageInput').value || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/%3E%3Ctext fill=%22%23999%22 font-family=%22sans-serif%22 font-size=%2224%22 dy=%2210.5%22 font-weight=%22bold%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22%3EBlog Image%3C/text%3E%3C/svg%3E',
         content: document.getElementById('postContentInput').value,
-        published: publish && document.getElementById('postPublishedInput').checked
+        published: publish || document.getElementById('postPublishedInput').checked
     };
 
     try {
         let savedPost;
-
-        const isUpdate = !!document.getElementById('postId').value;
 
         if (isUpdate) {
             // Update existing post
@@ -180,23 +169,15 @@ async function savePost(publish = true) {
                 body: JSON.stringify(postData),
             });
             // Store generated ID in the hidden field for future edits
-            document.getElementById('postId').value = savedPost.id;
+            document.getElementById('postId').value = savedPost.id || savedPost._id;
         }
 
-        // Refresh admin UI with latest data
         await refreshAdminUI();
+        showNotification(publish ? 'Post published!' : 'Draft saved!', 'success');
+        if (publish) clearEditor();
 
-        if (publish) {
-            // For published posts, stay on the admin page
-            showNotification('Post published successfully!', 'success');
-            clearEditor();
-        } else {
-            // For drafts, stay on the admin page
-            showNotification('Draft saved successfully!', 'success');
-            clearEditor();
-        }
     } catch (error) {
-        console.error('Failed to save post via API:', error);
+        console.error('Failed to save post:', error);
         showNotification('Failed to save post', 'error');
     }
 }
@@ -212,7 +193,7 @@ async function deletePost(id) {
         await refreshAdminUI();
         showNotification('Post deleted successfully!', 'success');
     } catch (error) {
-        console.error('Failed to delete post via API:', error);
+        console.error('Delete failed:', error);
         showNotification('Failed to delete post', 'error');
     }
 }
@@ -220,22 +201,22 @@ async function deletePost(id) {
 // Load posts table (takes posts array)
 function loadPostsTable(posts) {
     const tbody = document.getElementById('postsTableBody');
+    if (!tbody) return;
 
     if (posts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">No posts yet. Create your first post!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-secondary);">No posts yet.</td></tr>';
         return;
     }
 
     tbody.innerHTML = posts.map(post => `
         <tr>
             <td>${post.title}</td>
-            <td>${post.categoryName}</td>
-            <td>${post.dateFormatted}</td>
+            <td>${post.dateFormatted || post.date}</td>
             <td><span class="status-badge ${post.published ? 'published' : 'draft'}">${post.published ? 'Published' : 'Draft'}</span></td>
             <td>
                 <div class="table-actions">
-                    <button class="table-btn edit-btn" data-id="${post.id}">Edit</button>
-                    <button class="table-btn danger delete-btn" data-id="${post.id}">Delete</button>
+                    <button class="table-btn edit-btn" data-id="${post.id || post._id}">Edit</button>
+                    <button class="table-btn danger delete-btn" data-id="${post.id || post._id}">Delete</button>
                 </div>
             </td>
         </tr>
@@ -244,23 +225,20 @@ function loadPostsTable(posts) {
     // Add event listeners
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            loadPostToEditor(id);
+            loadPostToEditor(btn.dataset.id);
             closeModal();
         });
     });
 
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            deletePost(id);
+            deletePost(btn.dataset.id);
         });
     });
 }
 
 // Notification system
 function showNotification(message, type = 'info') {
-    // Create notification element if it doesn't exist
     let notification = document.getElementById('notification');
     if (!notification) {
         notification = document.createElement('div');
@@ -283,14 +261,9 @@ function showNotification(message, type = 'info') {
 
     notification.textContent = message;
     notification.style.background = type === 'success' ? '#4CAF50' : '#2196F3';
+    notification.style.opacity = '1';
+    notification.style.transform = 'translateX(0)';
 
-    // Show notification
-    setTimeout(() => {
-        notification.style.opacity = '1';
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-
-    // Hide after 3 seconds
     setTimeout(() => {
         notification.style.opacity = '0';
         notification.style.transform = 'translateX(100%)';
@@ -300,14 +273,16 @@ function showNotification(message, type = 'info') {
 // Modal functions
 function openModal() {
     refreshAdminUI();
-    document.getElementById('postsModal').style.display = 'flex';
+    const modal = document.getElementById('postsModal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function closeModal() {
-    document.getElementById('postsModal').style.display = 'none';
+    const modal = document.getElementById('postsModal');
+    if (modal) modal.style.display = 'none';
 }
 
-// Toolbar actions (simple markdown helpers)
+// Toolbar actions
 function insertMarkdown(action) {
     const textarea = document.getElementById('postContentInput');
     const start = textarea.selectionStart;
@@ -316,24 +291,12 @@ function insertMarkdown(action) {
     let replacement = selectedText;
 
     switch (action) {
-        case 'bold':
-            replacement = `**${selectedText}**`;
-            break;
-        case 'italic':
-            replacement = `*${selectedText}*`;
-            break;
-        case 'heading':
-            replacement = `\n## ${selectedText}\n`;
-            break;
-        case 'quote':
-            replacement = `\n> ${selectedText}\n`;
-            break;
-        case 'list':
-            replacement = `\n- ${selectedText}\n`;
-            break;
-        case 'link':
-            replacement = `[${selectedText}](url)`;
-            break;
+        case 'bold': replacement = `**${selectedText}**`; break;
+        case 'italic': replacement = `*${selectedText}*`; break;
+        case 'heading': replacement = `\n## ${selectedText}\n`; break;
+        case 'quote': replacement = `\n> ${selectedText}\n`; break;
+        case 'list': replacement = `\n- ${selectedText}\n`; break;
+        case 'link': replacement = `[${selectedText}](url)`; break;
     }
 
     textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
@@ -341,64 +304,68 @@ function insertMarkdown(action) {
     textarea.setSelectionRange(start, start + replacement.length);
 }
 
-// Event Listeners
-document.getElementById('newPostBtn').addEventListener('click', clearEditor);
-document.getElementById('viewPostsBtn').addEventListener('click', openModal);
-document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-document.getElementById('publishBtn').addEventListener('click', () => savePost(true));
-document.getElementById('saveDraftBtn').addEventListener('click', () => savePost(false));
+// Initialize listeners
+async function init() {
+    // Buttons
+    const newPostBtn = document.getElementById('newPostBtn');
+    if (newPostBtn) newPostBtn.addEventListener('click', clearEditor);
 
-// Logout functionality
-document.getElementById('logoutBtn').addEventListener('click', (e) => {
-    e.preventDefault();
-    if (confirm('Are you sure you want to logout?')) {
-        sessionStorage.removeItem('blogAdminAuth');
-        sessionStorage.removeItem('blogAdminEmail');
-        window.location.href = 'admin-login.html';
+    const viewPostsBtn = document.getElementById('viewPostsBtn');
+    if (viewPostsBtn) viewPostsBtn.addEventListener('click', openModal);
+
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+
+    const publishBtn = document.getElementById('publishBtn');
+    if (publishBtn) publishBtn.addEventListener('click', () => savePost(true));
+
+    const saveDraftBtn = document.getElementById('saveDraftBtn');
+    if (saveDraftBtn) saveDraftBtn.addEventListener('click', () => savePost(false));
+
+    // Logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (confirm('Logout?')) {
+                sessionStorage.clear();
+                localStorage.removeItem('blogAdminAuth');
+                window.location.href = 'index.html';
+            }
+        });
     }
-});
 
-// Preview update on input
-['postTitleInput', 'postExcerptInput', 'postCategoryInput', 'postDateInput', 'postImageInput', 'postContentInput'].forEach(id => {
-    document.getElementById(id).addEventListener('input', updatePreview);
-});
-
-// Also update on change for checkboxes and selects
-document.getElementById('postPublishedInput').addEventListener('change', updatePreview);
-
-// Toolbar buttons
-document.querySelectorAll('.toolbar-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        insertMarkdown(btn.dataset.action);
+    // Live preview
+    ['postTitleInput', 'postExcerptInput', 'postDateInput', 'postImageInput', 'postContentInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updatePreview);
     });
-});
 
-// Close modal on outside click
-document.getElementById('postsModal').addEventListener('click', (e) => {
-    if (e.target.id === 'postsModal') {
-        closeModal();
-    }
-});
+    // Toolbar
+    document.querySelectorAll('.toolbar-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            insertMarkdown(btn.dataset.action);
+        });
+    });
+
+    // Initial load
+    await refreshAdminUI();
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('postDateInput');
+    if (dateInput) dateInput.value = today;
+    updatePreview();
+}
 
 // Fetch data once and update all admin UI pieces
 async function refreshAdminUI() {
     const posts = await fetchAllPosts();
     updateStatistics(posts);
     updateRecentPosts(posts);
-    if (document.getElementById('postsModal').style.display === 'flex') {
+    if (document.getElementById('postsModal')?.style.display === 'flex') {
         loadPostsTable(posts);
     }
 }
 
-// Initialize
-refreshAdminUI();
-
-// Set default date to today
-const today = new Date().toISOString().split('T')[0];
-document.getElementById('postDateInput').value = today;
-
-// Initial preview
-updatePreview();
-
-// No more localStorage sync needed; data now lives in MongoDB via the API
+// Run init
+init();

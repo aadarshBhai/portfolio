@@ -7,56 +7,63 @@ const postId = urlParams.get('id');
 // Format date helper function
 function formatDate(dateString) {
     if (!dateString) return '';
-
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-        return dateString;
-    }
-
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+    if (isNaN(date.getTime())) return dateString;
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 // API Configuration
 const API_BASE_URL = window.API_BASE_URL || 'http://127.0.0.1:5000/api';
 
-// Sample fallback (for offline or local testing)
-const samplePosts = {
-    1: { id: 1, title: "Welcome to My Blog", category: "news-politics", date: "2026-02-09", content: "..." }
-};
-
 // Load post from API
 async function loadPost() {
-    let post = null;
-    if (postId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/posts/${postId}`);
-            if (response.ok) post = await response.json();
-        } catch (error) { console.error('Error fetching post:', error); }
+    if (!postId) {
+        const titleEl = document.getElementById('postTitle');
+        if (titleEl) titleEl.textContent = "No post ID provided";
+        return;
     }
 
-    if (post) {
-        displayPost(post);
-        loadRelatedPosts(post.category, post._id || post.id);
-        setupSocialSharing(post);
-    } else {
-        document.getElementById('postTitle').textContent = "Post Not Found";
+    try {
+        const response = await fetch(`${API_BASE_URL}/posts/${postId}`);
+        if (response.ok) {
+            const post = await response.json();
+            displayPost(post);
+            loadRelatedPosts(post._id || post.id);
+            setupSocialSharing(post);
+        } else {
+            const titleEl = document.getElementById('postTitle');
+            if (titleEl) titleEl.textContent = "Post Not Found";
+        }
+    } catch (error) {
+        console.error('Error fetching post:', error);
+        const titleEl = document.getElementById('postTitle');
+        if (titleEl) titleEl.textContent = "Error loading post";
     }
 }
 
 // Display Post Content
 function displayPost(post) {
-    document.getElementById('postTitle').textContent = post.title;
-    document.getElementById('postExcerpt').textContent = post.excerpt;
-    document.getElementById('postCategory').textContent = post.categoryName || post.category;
-    document.getElementById('postDate').textContent = formatDate(post.createdAt || post.date);
-    document.getElementById('postContent').innerHTML = post.content;
-    document.getElementById('postViews').textContent = post.views || 0;
-    document.getElementById('postShares').textContent = post.shares || 0;
-    document.getElementById('postComments').textContent = (post.comments || []).length;
-    document.getElementById('currentPost').textContent = post.title;
+    const safeSetText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
 
-    if (post.image) document.getElementById('postImage').src = post.image;
+    const safeSetHTML = (id, html) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+    };
+
+    safeSetText('postTitle', post.title);
+    safeSetText('postExcerpt', post.excerpt);
+    safeSetText('postDate', formatDate(post.createdAt || post.date));
+    safeSetHTML('postContent', post.content);
+    safeSetText('postViews', post.views || 0);
+    safeSetText('postShares', post.shares || 0);
+    safeSetText('postComments', (post.comments || []).length);
+    safeSetText('currentPost', post.title);
+
+    const postImage = document.getElementById('postImage');
+    if (postImage && post.image) postImage.src = post.image;
 
     loadComments();
 }
@@ -65,9 +72,14 @@ function displayPost(post) {
 function setupSocialSharing(post) {
     const url = encodeURIComponent(window.location.href);
     const title = encodeURIComponent(post.title);
-    document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
-    document.getElementById('shareLinkedIn').href = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
-    document.getElementById('shareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+
+    const twitterBtn = document.getElementById('shareTwitter');
+    const linkedInBtn = document.getElementById('shareLinkedIn');
+    const facebookBtn = document.getElementById('shareFacebook');
+
+    if (twitterBtn) twitterBtn.href = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
+    if (linkedInBtn) linkedInBtn.href = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+    if (facebookBtn) facebookBtn.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
 }
 
 // Load Comments
@@ -77,24 +89,31 @@ async function loadComments() {
         if (response.ok) {
             const comments = await response.json();
             const container = document.getElementById('commentsContainer');
-            document.getElementById('commentsCount').textContent = comments.length;
-            document.getElementById('postComments').textContent = comments.length;
+            const countEl = document.getElementById('commentsCount');
+            const postCountEl = document.getElementById('postComments');
 
-            if (comments.length === 0) {
-                container.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment!</p>';
-            } else {
-                container.innerHTML = comments.map(c => `
-                    <div class="comment">
-                        <div class="comment-header">
-                            <strong>${c.name}</strong>
-                            <span class="comment-date">${formatDate(c.createdAt)}</span>
+            if (countEl) countEl.textContent = comments.length;
+            if (postCountEl) postCountEl.textContent = comments.length;
+
+            if (container) {
+                if (comments.length === 0) {
+                    container.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment!</p>';
+                } else {
+                    container.innerHTML = comments.map(c => `
+                        <div class="comment">
+                            <div class="comment-header">
+                                <strong>${c.name}</strong>
+                                <span class="comment-date">${formatDate(c.createdAt)}</span>
+                            </div>
+                            <div class="comment-content">${c.content}</div>
                         </div>
-                        <div class="comment-content">${c.content}</div>
-                    </div>
-                `).join('');
+                    `).join('');
+                }
             }
         }
-    } catch (e) { console.error('Error loading comments:', e); }
+    } catch (e) {
+        console.error('Error loading comments:', e);
+    }
 }
 
 // Submit Comment
@@ -122,12 +141,16 @@ async function submitComment(event) {
 async function incrementShare(event, platform) {
     event.preventDefault();
     try {
-        await fetch(`${API_BASE_URL}/posts/${postId}/share`, { method: 'POST' });
+        fetch(`${API_BASE_URL}/posts/${postId}/share`, { method: 'POST' });
         const sharesElement = document.getElementById('postShares');
-        sharesElement.textContent = (parseInt(sharesElement.textContent) || 0) + 1;
+        if (sharesElement) {
+            sharesElement.textContent = (parseInt(sharesElement.textContent) || 0) + 1;
+        }
 
         const url = encodeURIComponent(window.location.href);
-        const title = encodeURIComponent(document.getElementById('postTitle').textContent);
+        const titleEl = document.getElementById('postTitle');
+        const title = titleEl ? encodeURIComponent(titleEl.textContent) : 'Blog Post';
+
         let shareUrl = platform === 'twitter' ? `https://twitter.com/intent/tweet?text=${title}&url=${url}` :
             platform === 'linkedin' ? `https://www.linkedin.com/sharing/share-offsite/?url=${url}` :
                 `https://www.facebook.com/sharer/sharer.php?u=${url}`;
@@ -135,26 +158,30 @@ async function incrementShare(event, platform) {
     } catch (e) { console.error('Error sharing:', e); }
 }
 
-// Load Related Posts
-async function loadRelatedPosts(category, currentId) {
+// Load Latest Posts (Instead of Related by Category)
+async function loadRelatedPosts(currentId) {
     try {
         const response = await fetch(`${API_BASE_URL}/posts`);
         if (response.ok) {
             const posts = await response.json();
-            const related = posts.filter(p => p.category === category && (p._id || p.id) !== currentId && p.published).slice(0, 3);
+            // Just show latest 3 posts excluding current one
+            const related = posts
+                .filter(p => (p._id || p.id) !== currentId && p.published)
+                .slice(0, 3);
+
             const container = document.getElementById('relatedPosts');
+            const section = document.getElementById('related-posts');
 
             if (related.length === 0) {
-                document.getElementById('related-posts').style.display = 'none';
-            } else {
+                if (section) section.style.display = 'none';
+            } else if (container) {
                 container.innerHTML = related.map(p => `
                     <article class="blog-card reveal">
                         <div class="blog-image">
-                            <img src="${p.image}" alt="${p.title}" onerror="this.src='data:image/svg+xml,%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/%3E%3Ctext fill=%22%23999%22 font-family=%22sans-serif%22 font-size=%2224%22 dy=%2210.5%22 font-weight=%22bold%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22%3EBlog Image%3C/text%3E%3C/svg%3E'">
+                            <img src="${p.image || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/%3E%3Ctext fill=%22%23999%22 font-family=%22sans-serif%22 font-size=%2224%22 dy=%2210.5%22 font-weight=%22bold%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22%3EBlog Image%3C/text%3E%3C/svg%3E'}" alt="${p.title}">
                         </div>
                         <div class="blog-content">
                             <div class="blog-meta">
-                                <span class="blog-category">${p.categoryName || p.category}</span>
                                 <span class="blog-date">${formatDate(p.createdAt || p.date)}</span>
                             </div>
                             <h3>${p.title}</h3>
@@ -165,14 +192,18 @@ async function loadRelatedPosts(category, currentId) {
                 `).join('');
             }
         }
-    } catch (e) { console.error('Error loading related:', e); }
+    } catch (e) { console.error('Error loading latest posts:', e); }
 }
 
 // Init
 if (postId) {
     loadPost();
-    document.getElementById('newCommentForm').addEventListener('submit', submitComment);
-    document.getElementById('shareTwitter').addEventListener('click', (e) => incrementShare(e, 'twitter'));
-    document.getElementById('shareLinkedIn').addEventListener('click', (e) => incrementShare(e, 'linkedin'));
-    document.getElementById('shareFacebook').addEventListener('click', (e) => incrementShare(e, 'facebook'));
+    const commentForm = document.getElementById('newCommentForm');
+    if (commentForm) commentForm.addEventListener('submit', submitComment);
+
+    ['shareTwitter', 'shareLinkedIn', 'shareFacebook'].forEach(id => {
+        const el = document.getElementById(id);
+        const platform = id.replace('share', '').toLowerCase();
+        if (el) el.addEventListener('click', (e) => incrementShare(e, platform));
+    });
 }
