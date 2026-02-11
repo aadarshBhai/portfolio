@@ -247,8 +247,12 @@ nav {
 
 .hero-image {
     position: relative;
-    height: 600px;
+    aspect-ratio: 1/1;
+    height: auto;
+    max-width: 500px;
+    border-radius: 50%;
     overflow: hidden;
+    margin-left: auto;
 }
 
 .hero-image img {
@@ -274,7 +278,9 @@ nav {
     }
 
     .hero-image {
-        height: 400px;
+        height: auto;
+        max-width: 300px;
+        margin: 0 auto;
     }
 }
 
