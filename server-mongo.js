@@ -13,7 +13,8 @@ console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'SET' : 'NOT SET');
 console.log('MONGO_URI:', process.env.MONGO_URI ? 'SET' : 'NOT SET');
 
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb+srv://aadarshgolucky:A%40Wrpcp3.%40737xx@cluster0.oss7hwd.mongodb.net/blog?retryWrites=true&w=majority&appName=Cluster0';
-console.log('Using MongoDB URI:', MONGODB_URI.replace(/:A%40.*@/, ':***@'));
+console.log('Raw MONGODB_URI from env:', process.env.MONGODB_URI);
+console.log('Final MongoDB URI:', MONGODB_URI.replace(/:A%40.*@/, ':***@'));
 const DB_NAME = 'blog';
 const COLLECTION_NAME = 'posts';
 
